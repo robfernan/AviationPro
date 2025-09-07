@@ -82,130 +82,87 @@ npm run dev
 ```
 
 ### Access Application
-Open [http://localhost:5173](http://localhost:5173) in your browser
+# AviationPro — Professional Flight Planning Suite
 
-## 📦 Build & Deployment
-
-```powershell
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## 🔧 Development
-
-### Project Structure
-```
-src/
-├── components/
-│   ├── FlightPlanForm.tsx      # Main flight planning interface with comprehensive instructions
-│   ├── CX6Calculator.tsx       # E6B flight computer with multiple calculators
-│   ├── WeatherCalculator.tsx   # Weather tools (density altitude, cloud base)
-│   ├── WeightBalanceCalculator.tsx # Weight & balance calculations
-│   ├── NavigationTools.tsx     # Navigation calculations, weather services, and time zone converter
-│   ├── FlightLogs.tsx          # Digital flight logging system
-│   ├── PressureAltitudeCalculator.tsx # Additional weather calculations
-│   └── CloudBaseCalculator.tsx # Standalone cloud base calculator
-├── App.tsx                     # Main application with dark mode support
-└── main.tsx                    # Application entry point
-```
-
-### Key Components
-
-#### FlightPlanForm
-- Manages flight planning with dynamic checkpoints
-- Calculates totals for distance, time, and fuel
-- Supports export to print/download formats
-- Comprehensive 8-section user guide
-- VOR navigation setup and configuration
-
-#### WeatherCalculator
-- Unified component with tabbed interface
-- Density altitude calculations in Celsius
-- Cloud base approximations
-- Performance impact warnings
-
-#### CX6Calculator
-- Traditional E6B flight computer interface
-- Wind triangle and fuel calculations
-- Aviation-specific unit conversions
-- Multiple calculation modes in one interface
-
-## 🎯 Usage Examples
-
-### Flight Planning
-1. Enter aircraft information (type, tail number, pilot)
-2. Set departure and destination airports
-3. Add checkpoints between departure and destination
-4. Enter altitude, course, distance, and fuel for each leg
-5. Configure VOR navigation for each checkpoint
-6. Review automatic totals and export flight plan
-7. Use comprehensive instructions for guidance
-
-### Weather Calculations
-1. Switch between Density Altitude and Cloud Base tabs
-2. Enter airport elevation, temperature (°C), altimeter setting
-3. View pressure altitude, density altitude, and ISA deviations
-4. Check performance impact warnings
-
-### Navigation Tools
-1. Use distance and bearing calculators for flight planning
-2. Convert between different units (nautical miles, statute miles, kilometers)
-3. Access official aviation weather services for current conditions
-4. Convert between UTC and local time for international flights
-5. Use aviation-specific reference information and quick calculations
-
-## 🔍 Troubleshooting
-
-### Common Issues
-- **Vite 404 Error**: Ensure `index.html` exists at project root
-- **Build Failures**: Run `npm install` to restore dependencies
-- **Port Conflicts**: Vite runs on port 5173 by default
-- **Dark Mode Issues**: Ensure Tailwind dark mode is configured
-
-### Development Tips
-- Use browser dev tools for debugging
-- Check console for TypeScript errors
-- Dark mode toggle available in header
-- All calculations update in real-time
-- Hot module replacement for fast development
-
-## 🚀 Professional Enhancements
-
-### High Priority Additions
-- **Fuel Planning Calculator**: Trip fuel, reserve fuel, fuel stops with airport search
-- **Crosswind Calculator**: Runway crosswind component analysis with wind direction
-- **Aircraft Performance Calculator**: Takeoff/landing distance calculations
-- **METAR/TAF Integration**: Real weather data integration
-- **Airport Database**: Airport info, frequencies, services, and charts
-
-### Medium Priority Features
-- **Time Zone Converter**: UTC/local time conversions for international flights
-- **VFR/IFR Minimums Reference**: Quick reference for minimums by aircraft category
-- **Flight Plan Filing**: Digital flight plan submission to ATC
-- **Route Optimization**: Automatic route suggestions based on weather and winds
-- **Aircraft Profile Management**: Save/load aircraft configurations
-
-### Integration Opportunities
-- **ForeFlight Web**: Direct links to ForeFlight (already implemented)
-- **Garmin Pilot**: Direct links to Garmin Pilot (already implemented)
-- **FlightAware**: Flight tracking and delay information
-- **Aviation Weather**: Real-time weather data integration
-- **NOTAMs Integration**: Notice to Air Missions display
-
-### UI/UX Improvements
-- **Mobile Responsiveness**: Optimize for tablet use in cockpit
-- **Keyboard Shortcuts**: Quick access to common functions
-- **Data Import/Export**: CSV/JSON import for aircraft data
-- **Print Templates**: Customizable print formats for different aircraft
-- **Offline Mode**: Core functionality without internet connection
-
-## 📄 License & Contact
-
-This project is designed for flight simulation and training purposes. Always consult official aviation publications and current weather for actual flight planning.
+A modern, professional-grade aviation flight planning app for pilots, built with React, TypeScript, and Tailwind CSS.
 
 ---
 
-**Built with ❤️ for aviation professionals and enthusiasts**
+## ✈️ Screenshots
+
+
+<div align="center">
+
+<img src="assets/screenshots/flightplan.png" alt="Flight Planner" width="600" />
+<br><sub>Flight Planner — route, checkpoints, and calculations</sub>
+
+<img src="assets/screenshots/cx6flightcomputer.png" alt="CX-6 Flight Computer" width="600" />
+<br><sub>CX-6 Flight Computer — wind, TAS, fuel, and more</sub>
+
+<img src="assets/screenshots/Weather.png" alt="Weather Tools" width="600" />
+<br><sub>Weather Tools — density altitude, cloud base, warnings</sub>
+
+<img src="assets/screenshots/weight&balance.png" alt="Weight & Balance" width="600" />
+<br><sub>Weight & Balance — CG envelope, safety alerts</sub>
+
+<img src="assets/screenshots/navigation.png" alt="Navigation Tools" width="600" />
+<br><sub>Navigation Tools — distance, bearing, conversions, weather links</sub>
+
+<img src="assets/screenshots/flightlogs.png" alt="Flight Logs" width="600" />
+<br><sub>Flight Logs — digital logbook with export and persistent storage</sub>
+
+</div>
+
+---
+
+## 🚀 Features
+
+- **Flight Planner:** Dynamic route planning, VOR setup, export options
+- **CX-6 Flight Computer:** Wind triangle, fuel, TAS, time/distance
+- **Weather Tools:** Density altitude, cloud base, performance warnings
+- **Weight & Balance:** CG envelope, safety alerts
+- **Navigation Tools:** Distance, bearing, unit/coordinate conversions, weather links, time zone converter
+- **Flight Logs:** Digital logbook with export and persistent storage
+
+---
+
+## 🛠️ Tech Stack
+
+- React 18 + TypeScript
+- Tailwind CSS (dark mode)
+- Vite
+- Lucide React icons
+
+---
+
+## 🚀 Quick Start
+
+```sh
+git clone https://github.com/robfernan/AviationPro.git
+cd AviationPro
+npm install
+npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 📦 Build
+
+```sh
+npm run build
+npm run preview
+```
+
+---
+
+## 📄 License
+
+This project is for flight simulation and training. Always consult official aviation publications and current weather for actual flight planning.
+
+Built with ❤️ for aviation professionals and enthusiasts.
+
+---
+
+_For detailed usage, troubleshooting, and enhancement roadmap, see the [Wiki](https://github.com/robfernan/AviationPro/wiki)._ 
+3. View pressure altitude, density altitude, and ISA deviations
