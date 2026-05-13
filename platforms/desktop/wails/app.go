@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
 )
 
 // App struct
@@ -14,29 +18,33 @@ func NewApp() *App {
 	return &App{}
 }
 
-// Startup is called when the app starts. The context is saved
-// so we can call the runtime methods
-func (b *App) Startup(ctx context.Context) {
-	b.ctx = ctx
+// Startup is called when the app starts.
+func (a *App) Startup(ctx context.Context) {
+	a.ctx = ctx
+}
+
+// GetWeather fetches METAR data from AviationWeather.gov to bypass CORS
+func (a *App) GetWeather(icao string) string {
+	icao = strings.ToUpper(strings.TrimSpace(icao))
+	if len(icao) != 4 {
+		return "INVALID ICAO"
+	}
+
+	url := fmt.Sprintf("https://aviationweather.gov/api/data/metar?ids=%s", icao)
+	
+	resp, err := http.Get(url)
+	if err != nil {
+		return "OFFLINE"
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "READ_ERROR"
+	}
+
+	return string(body)
 }
 
 // Shutdown is called when the app closes
-func (b *App) Shutdown(ctx context.Context) {
-}
-
-// OpenFile opens a file save/open dialog
-func (a *App) OpenFile(filter string) (string, error) {
-	// This will be implemented using Wails runtime dialogs
-	return "", nil
-}
-
-// SaveFile opens a file save dialog
-func (a *App) SaveFile(filename string, content string) error {
-	// This will be implemented using Wails runtime dialogs
-	return nil
-}
-
-// GetAppVersion returns the app version
-func (a *App) GetAppVersion() string {
-	return "0.1.0"
-}
+func (a *App) Shutdown(ctx context.Context) {}

@@ -9,24 +9,30 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
 
-// Embed frontend files
 //go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
-	// Create application with options
+	// Create an instance of the app structure
+	app := NewApp()
+
 	err := wails.Run(&options.App{
-		Title:  "AviationPro",
-		Width:  1280,
-		Height: 800,
+		Title:             "AviationPro",
+		Width:             1280,
+		Height:            800,
+		Frameless:         true,
+		MinWidth:          380,
+		MinHeight:         600,
+		WindowIsTranslucent: true,
+		CSSDragProperty:   "--wails-draggable",
+		CSSDragValue:      "drag",
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 2, G: 6, B: 23, A: 255}, // Dark background
-		OnStartup:        nil,
-		OnShutdown:       nil,
+		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 255},
+		OnStartup:        app.Startup,
 		Bind: []interface{}{
-			&App{},
+			app,
 		},
 	})
 
