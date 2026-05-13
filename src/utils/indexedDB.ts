@@ -1,7 +1,7 @@
 // IndexedDB utility for offline-first data persistence
 
 const DB_NAME = 'AviationProDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface AircraftProfile {
   id: string;
