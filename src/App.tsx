@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { useAviation } from './hooks/useAviation';
 import { WeatherReport, WCAResult } from './types/aviation';
 
-// Wails Runtime Helpers - provided by Wails at runtime
+// Wails Runtime Helpers
 const runtime = (window as any).runtime;
 const isDesktop = !!runtime;
 
 const App: React.FC = () => {
-  // Destructuring all tools from our custom hook
-  const { math, fetchMetar, flights, aircraft, addFlight } = useAviation();
+  const { math, fetchMetar, flights, aircraft, addFlight, addAircraft } = useAviation();
   
+  // Navigation State
   const [activeTab, setActiveTab] = useState<'PLANNER' | 'WEATHER' | 'LOGS' | 'HANGAR'>('PLANNER');
 
-  // Calculator State
+  // CX-6 Calculator State
   const [course, setCourse] = useState(0);
   const [tas, setTas] = useState(100);
   const [windDir, setWindDir] = useState(0);
@@ -23,6 +23,12 @@ const App: React.FC = () => {
   const [icao, setIcao] = useState("");
   const [weather, setWeather] = useState<WeatherReport | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Hangar Form State
+  const [newTail, setNewTail] = useState("");
+  const [newModel, setNewModel] = useState("");
+  const [newWeight, setNewWeight] = useState(0);
+  const [newArm, setNewArm] = useState(0);
 
   // --- Handlers ---
 
@@ -51,13 +57,25 @@ const App: React.FC = () => {
       route: `CRS: ${course} TAS: ${tas} WCA: ${wcaResult.windCorrectionAngle}`,
       duration: 0.0
     });
-    alert("Flight calculation committed to local IndexedDB.");
+    alert("Flight calculation saved to local IndexedDB.");
+  };
+
+  const handleRegisterAircraft = async () => {
+    if (!newTail || !newModel) return;
+    await addAircraft({
+      tailNumber: newTail.toUpperCase(),
+      model: newModel.toUpperCase(),
+      emptyWeight: newWeight,
+      emptyArm: newArm,
+      maxGrossWeight: 0
+    });
+    setNewTail(""); setNewModel(""); setNewWeight(0); setNewArm(0);
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-black text-zinc-100 font-mono overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-black text-zinc-100 font-mono overflow-hidden border border-zinc-800">
       
-      {/* 🛠️ NAVIGATION / DRAG BAR (Silhouette) */}
+      {/* 🛠️ NAVIGATION / DRAG BAR (Unified Silhouette) */}
       <nav 
         style={{ ["--wails-draggable" as any]: "drag" }}
         className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900 px-6 py-2 select-none shrink-0"
@@ -65,7 +83,7 @@ const App: React.FC = () => {
         <div className="flex items-center gap-4">
           <span className="text-red-600 font-black tracking-tighter text-2xl italic">AVPRO</span>
           <div className="h-4 w-[1px] bg-zinc-800 hidden md:block"></div>
-          <span className="text-[10px] text-zinc-600 tracking-[0.3em] uppercase italic hidden md:block">Precision Hardware Suite</span>
+          <span className="text-[10px] text-zinc-600 tracking-[0.3em] uppercase italic hidden md:block">Precision Flight Suite</span>
         </div>
         
         <div className="flex items-center gap-1" style={{ ["--wails-draggable" as any]: "no-drag" }}>
@@ -73,8 +91,8 @@ const App: React.FC = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1 text-[11px] font-bold tracking-widest transition-all ${
-                activeTab === tab ? 'bg-red-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
+              className={`px-4 py-1 text-[11px] font-bold tracking-widest transition-all border-b-2 ${
+                activeTab === tab ? 'border-red-600 bg-zinc-800 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {tab}
@@ -90,14 +108,14 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* MAIN VIEWPORT (Internal Scrolling Only) */}
+      {/* 📱 MAIN VIEWPORT */}
       <main className="flex-1 overflow-y-auto p-6 max-w-7xl mx-auto w-full">
         
         {/* TAB: PLANNER */}
         {activeTab === 'PLANNER' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
             <section className="space-y-6">
-              <h2 className="text-xl font-black border-l-4 border-red-700 pl-3">CX-6 COMPUTER</h2>
+              <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase">CX-6 Computer</h2>
               <div className="grid grid-cols-2 gap-4">
                 <Input label="COURSE" value={course} onChange={(v) => setCourse(Number(v))} unit="°" />
                 <Input label="TAS" value={tas} onChange={(v) => setTas(Number(v))} unit="KT" />
@@ -105,7 +123,7 @@ const App: React.FC = () => {
                 <Input label="WIND SPD" value={windSpd} onChange={(v) => setWindSpd(Number(v))} unit="KT" />
               </div>
               <div className="flex gap-2">
-                <button onClick={handleCalcWCA} className="flex-1 bg-zinc-100 text-black py-3 font-black hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest">
+                <button onClick={handleCalcWCA} className="flex-1 bg-zinc-100 text-black py-4 font-black hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest">
                   Calculate
                 </button>
                 {wcaResult && (
@@ -116,15 +134,15 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            <section className="bg-zinc-900/30 border border-zinc-800 p-8 flex flex-col justify-center">
+            <section className="bg-zinc-900/30 border border-zinc-800 p-8 flex flex-col justify-center min-h-[300px]">
                 {wcaResult ? (
-                  <div className="space-y-8">
+                  <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                     <ResultBlock label="HEADING (TH)" value={`${wcaResult.heading}°`} />
                     <ResultBlock label="GROUND SPEED" value={`${wcaResult.groundSpeed} KT`} />
                     <ResultBlock label="WIND CORRECTION" value={`${wcaResult.windCorrectionAngle}°`} color="text-red-500" />
                   </div>
                 ) : (
-                  <div className="text-zinc-600 italic text-center">Awaiting inputs...</div>
+                  <div className="text-zinc-700 italic text-center uppercase tracking-widest text-xs">Awaiting navigational inputs...</div>
                 )}
             </section>
           </div>
@@ -136,49 +154,52 @@ const App: React.FC = () => {
             <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase">METAR Fetcher</h2>
             <div className="flex gap-2">
               <input 
-                className="flex-1 bg-zinc-900 border border-zinc-700 p-4 text-2xl uppercase font-black focus:border-red-600 outline-none"
+                className="flex-1 bg-zinc-900 border border-zinc-700 p-4 text-2xl uppercase font-black focus:border-red-600 outline-none text-white"
                 placeholder="ICAO CODE"
                 value={icao}
                 onChange={(e) => setIcao(e.target.value.toUpperCase())}
                 maxLength={4}
               />
-              <button onClick={handleWeather} disabled={loading} className="bg-red-700 px-8 font-black">
+              <button onClick={handleWeather} disabled={loading} className="bg-red-700 px-8 font-black hover:bg-red-600 transition-colors">
                 {loading ? '...' : 'FETCH'}
               </button>
             </div>
             {weather && (
-              <div className="bg-zinc-900 border-l-4 border-zinc-100 p-6 font-mono overflow-x-auto">
-                <p className="text-zinc-500 text-[10px] mb-2">{weather.timestamp} // {weather.isOffline ? 'CACHED/OFFLINE' : 'LIVE_LINK'}</p>
-                <p className="text-lg uppercase italic whitespace-pre-wrap">{weather.raw}</p>
+              <div className="bg-zinc-900 border border-zinc-800 p-6 font-mono">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`px-3 py-1 text-[10px] font-black ${weather.raw.includes('VFR') ? 'bg-green-600' : 'bg-red-700'}`}>
+                    {weather.raw.includes('VFR') ? 'VFR' : 'IFR/OTHER'}
+                  </div>
+                  <span className="text-zinc-500 text-[10px]">{weather.timestamp} // {weather.isOffline ? 'OFFLINE' : 'LIVE'}</span>
+                </div>
+                <p className="text-lg uppercase italic whitespace-pre-wrap text-zinc-200 tracking-wide">{weather.raw}</p>
               </div>
             )}
           </div>
         )}
 
-        {/* TAB: LOGS (Now uses 'flights') */}
+        {/* TAB: LOGS */}
         {activeTab === 'LOGS' && (
           <div className="space-y-6 animate-in fade-in duration-500">
-            <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase">Pre-Flight History</h2>
-            <div className="border border-zinc-800 bg-zinc-950">
+            <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase">Flight History</h2>
+            <div className="border border-zinc-800 bg-zinc-950 overflow-hidden">
               <table className="w-full text-left">
-                <thead className="bg-zinc-900 text-[10px] text-zinc-500 uppercase">
+                <thead className="bg-zinc-900 text-[10px] text-zinc-500 uppercase tracking-widest">
                   <tr>
                     <th className="p-4 border-b border-zinc-800">Date</th>
-                    <th className="p-4 border-b border-zinc-800">Calculation Summary</th>
-                    <th className="p-4 border-b border-zinc-800 text-right">Duration</th>
+                    <th className="p-4 border-b border-zinc-800">Route/Calculation</th>
+                    <th className="p-4 border-b border-zinc-800 text-right">Time</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
                   {flights.length > 0 ? flights.map(f => (
                     <tr key={f.id} className="border-b border-zinc-800 hover:bg-zinc-900/50">
-                      <td className="p-4 text-zinc-400">{f.date}</td>
-                      <td className="p-4 font-bold">{f.route}</td>
-                      <td className="p-4 text-red-600 text-right">{f.duration} HR</td>
+                      <td className="p-4 text-zinc-500">{f.date}</td>
+                      <td className="p-4 font-bold tracking-tight">{f.route}</td>
+                      <td className="p-4 text-red-600 text-right font-black">{f.duration} HR</td>
                     </tr>
                   )) : (
-                    <tr>
-                      <td colSpan={3} className="p-20 text-center text-zinc-600 italic">No historical logs found in local storage.</td>
-                    </tr>
+                    <tr><td colSpan={3} className="p-20 text-center text-zinc-700 uppercase font-black text-xs tracking-widest">No local logs found</td></tr>
                   )}
                 </tbody>
               </table>
@@ -186,44 +207,58 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* TAB: HANGAR (Now uses 'aircraft') */}
+        {/* TAB: HANGAR */}
         {activeTab === 'HANGAR' && (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase">Registered Fleet</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {aircraft.length > 0 ? aircraft.map(a => (
-                <div key={a.id} className="bg-zinc-900 border border-zinc-800 p-6 hover:border-red-600 transition-colors">
-                  <div className="text-red-600 font-black text-2xl tracking-tighter italic">{a.tailNumber}</div>
-                  <div className="text-xs text-zinc-400 uppercase tracking-widest mt-1">{a.model}</div>
-                  <div className="mt-4 pt-4 border-t border-zinc-800 grid grid-cols-2 text-[10px] text-zinc-500 uppercase">
-                    <div>Empty Wt: <span className="text-white">{a.emptyWeight}</span></div>
-                    <div>Empty Arm: <span className="text-white">{a.emptyArm}</span></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-in fade-in duration-500">
+            <section className="space-y-6">
+              <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase tracking-tighter">Register Aircraft</h2>
+              <div className="bg-zinc-900/50 p-6 border border-zinc-800 space-y-4">
+                <Input label="Tail Number" value={newTail} onChange={setNewTail} unit="ID" />
+                <Input label="Make/Model" value={newModel} onChange={setNewModel} unit="TYPE" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="Empty Weight" value={newWeight} onChange={(v) => setNewWeight(Number(v))} unit="LBS" />
+                  <Input label="Empty Arm" value={newArm} onChange={(v) => setNewArm(Number(v))} unit="IN" />
+                </div>
+                <button onClick={handleRegisterAircraft} className="w-full bg-red-700 text-white py-4 font-black uppercase tracking-widest hover:bg-red-600 transition-all">Add to Fleet</button>
+              </div>
+            </section>
+            <section className="md:col-span-2 space-y-6">
+              <h2 className="text-xl font-black border-l-4 border-zinc-700 pl-3 uppercase text-zinc-600">Fleet Database</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {aircraft.map(a => (
+                  <div key={a.id} className="bg-zinc-900 border border-zinc-800 p-6 group hover:border-red-600 transition-all relative overflow-hidden">
+                    <div className="text-red-600 font-black text-3xl italic tracking-tighter">{a.tailNumber}</div>
+                    <div className="text-[10px] text-zinc-500 font-bold uppercase mb-4">{a.model}</div>
+                    <div className="grid grid-cols-2 text-[10px] text-zinc-600 border-t border-zinc-800 pt-4 uppercase">
+                      <div>Weight: <span className="text-zinc-100">{a.emptyWeight}</span></div>
+                      <div>Arm: <span className="text-zinc-100">{a.emptyArm}</span></div>
+                    </div>
                   </div>
-                </div>
-              )) : (
-                <div className="col-span-3 text-center p-24 border border-zinc-900 text-zinc-700 uppercase tracking-[0.3em] font-black">
-                  FLEET_DATABASE_EMPTY
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            </section>
           </div>
         )}
 
       </main>
 
-      <footer className="bg-zinc-900 border-t border-zinc-800 px-6 py-2 flex justify-between text-[9px] text-zinc-600 uppercase tracking-[0.2em] shrink-0">
-        <div>System: Nominal // HP Debian Station</div>
-        <div className="text-zinc-500">AviationPro // LocalDB Active</div>
+      {/* 📟 BOTTOM STATUS BAR */}
+      <footer className="h-8 bg-zinc-900 border-t border-zinc-800 px-6 flex items-center justify-between text-[9px] text-zinc-600 uppercase tracking-widest shrink-0">
+        <div className="flex gap-4">
+          <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> System Nominal</span>
+          <span>IndexedDB: Ready</span>
+        </div>
+        <div className="text-zinc-500">AviationPro // Standalone v1.2</div>
       </footer>
     </div>
   );
 };
 
-// --- Typesafe UI Components ---
+// --- Typesafe UI Sub-Components ---
 interface InputProps { label: string; value: number | string; onChange: (v: string) => void; unit: string; }
 const Input: React.FC<InputProps> = ({ label, value, onChange, unit }) => (
   <div className="flex flex-col gap-1">
-    <label className="text-[9px] font-bold text-zinc-500 tracking-widest">{label}</label>
+    <label className="text-[9px] font-bold text-zinc-500 tracking-widest uppercase">{label}</label>
     <div className="relative">
       <input type="number" value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 p-3 text-white focus:border-red-700 outline-none transition-all font-mono" />
       <span className="absolute right-3 top-3 text-[10px] text-zinc-700 font-bold select-none">{unit}</span>

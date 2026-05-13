@@ -20,10 +20,10 @@ func main() {
 		Title:             "AviationPro",
 		Width:             1280,
 		Height:            800,
-		Frameless:         true,
+		Frameless:         true, // Enabled for that hardware silhouette
 		MinWidth:          380,
 		MinHeight:         600,
-		WindowIsTranslucent: true,
+		// Note: WindowIsTranslucent removed (Mac-only property)
 		CSSDragProperty:   "--wails-draggable",
 		CSSDragValue:      "drag",
 		AssetServer: &assetserver.Options{
