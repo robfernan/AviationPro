@@ -72,14 +72,10 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
   const cloudBaseResult = calculateCloudBase();
 
   return (
-    <div className={`${darkMode ? 'bg-theme-card-dark' : 'bg-theme-card'} rounded-lg shadow-lg border ${
-      darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'
-    }`}>
-      <div className={`${darkMode ? 'bg-theme-header-dark' : 'bg-theme-header'} border-b ${
-        darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'
-      } p-6`}>
+    <div className="rounded-lg shadow-lg border border-zinc-800 bg-black">
+      <div className="bg-zinc-900 border-b border-zinc-800 p-6">
         <div className="flex items-center space-x-3 mb-4">
-          <Cloud className={`w-6 h-6 ${darkMode ? 'text-theme-accent-dark' : 'text-theme-accent'}`} />
+          <Cloud className="w-6 h-6 text-red-500" />
           <h2 className="text-2xl font-bold">Weather Calculator</h2>
         </div>
         <p className="text-sm opacity-75">
@@ -89,13 +85,13 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
 
       <div className="p-6">
         {/* Tool Selector */}
-        <div className="flex space-x-1 mb-6 bg-theme-header dark:bg-theme-header-dark rounded-lg p-1">
+        <div className="flex flex-wrap bg-black border border-zinc-800 rounded-sm overflow-hidden mb-6">
           <button
             onClick={() => setActiveTool('density')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 min-w-[120px] py-4 px-4 text-[9px] font-black tracking-widest border-r border-zinc-800 transition-all ${
               activeTool === 'density'
-                ? 'bg-theme-card dark:bg-theme-card-dark text-theme-accent dark:text-theme-accent-dark shadow-sm'
-                : 'text-theme-secondary dark:text-theme-secondary-dark hover:text-theme-primary dark:hover:text-theme-primary-dark'
+                ? 'bg-red-700 text-white shadow-[inset_0_0_20px_rgba(0,0,0,0.4)]'
+                : 'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900/50'
             }`}
           >
             <Gauge className="w-4 h-4 inline mr-2" />
@@ -103,10 +99,10 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
           </button>
           <button
             onClick={() => setActiveTool('cloudbase')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 min-w-[120px] py-4 px-4 text-[9px] font-black tracking-widest transition-all ${
               activeTool === 'cloudbase'
-                ? 'bg-theme-card dark:bg-theme-card-dark text-theme-accent dark:text-theme-accent-dark shadow-sm'
-                : 'text-theme-secondary dark:text-theme-secondary-dark hover:text-theme-primary dark:hover:text-theme-primary-dark'
+                ? 'bg-red-700 text-white shadow-[inset_0_0_20px_rgba(0,0,0,0.4)]'
+                : 'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900/50'
             }`}
           >
             <Cloud className="w-4 h-4 inline mr-2" />
@@ -128,7 +124,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
                   value={airportElevation}
                   onChange={(e) => setAirportElevation(e.target.value)}
                   className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
+                    'bg-black border-zinc-800 text-white focus:border-red-600'
                   }`}
                   min="-1000"
                   max="20000"
@@ -147,7 +143,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
                   value={temperature}
                   onChange={(e) => setTemperature(e.target.value)}
                   className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
+                    'bg-black border-zinc-800 text-white focus:border-red-600'
                   }`}
                   min="-60"
                   max="60"
@@ -166,7 +162,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
                   value={altimeterSetting}
                   onChange={(e) => setAltimeterSetting(e.target.value)}
                   className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
+                    'bg-black border-zinc-800 text-white focus:border-red-600'
                   }`}
                   min="28.00"
                   max="32.00"
@@ -178,21 +174,21 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
               <button
                 onClick={clearInputs}
                 className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                  darkMode ? 'bg-theme-card-dark hover:bg-theme-accent-dark/20 text-theme-primary-dark' : 'bg-theme-header hover:bg-theme-accent/10 text-theme-primary'
+                  'bg-zinc-900 hover:bg-zinc-800 text-zinc-100'
                 }`}
               >
                 Clear All Inputs
               </button>
             </div>
 
-            <div className={`p-6 rounded-lg ${darkMode ? 'bg-theme-card-dark' : 'bg-theme-header'}`}>
+            <div className="p-6 rounded-lg bg-zinc-900">
               <h4 className="text-lg font-semibold mb-4">Density Altitude Results</h4>
               {densityResults && !('error' in densityResults) ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
                       <div className="text-sm opacity-75 mb-1">Pressure Altitude</div>
-                      <div className="text-2xl font-bold text-theme-accent dark:text-theme-accent-dark">
+                      <div className="text-2xl font-bold text-red-500">
                         {densityResults.pressureAltitude.toLocaleString()} ft
                       </div>
                     </div>
@@ -200,7 +196,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
                     <div>
                       <div className="text-sm opacity-75 mb-1">ISA Temperature Deviation</div>
                       <div className={`text-lg font-semibold ${
-                        densityResults.isaDeviation > 0 ? 'text-red-600' : 'text-theme-accent'
+                        densityResults.isaDeviation > 0 ? 'text-red-500' : 'text-red-300'
                       }`}>
                         {densityResults.isaDeviation > 0 ? '+' : ''}{densityResults.isaDeviation.toFixed(1)}°C
                       </div>
@@ -210,7 +206,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
                   <div className="space-y-4">
                     <div>
                       <div className="text-sm opacity-75 mb-1">Density Altitude</div>
-                      <div className="text-3xl font-bold text-theme-accent dark:text-theme-accent-dark">
+                      <div className="text-3xl font-bold text-red-500">
                         {densityResults.densityAltitude.toLocaleString()} ft
                       </div>
                     </div>
@@ -241,9 +237,9 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
               )}
 
               {densityResults && !('error' in densityResults) && (
-                <div className="mt-6 p-4 bg-theme-header dark:bg-theme-header-dark rounded-lg">
-                  <h5 className="font-medium mb-2 text-gray-900 dark:text-white">Performance Impact:</h5>
-                  <div className="text-sm space-y-1 text-gray-700 dark:text-gray-100">
+                <div className="mt-6 p-4 bg-zinc-900 rounded-lg">
+                  <h5 className="font-medium mb-2 text-white">Performance Impact:</h5>
+                  <div className="text-sm space-y-1 text-zinc-300">
                     <div>• Higher density altitude reduces engine power and propeller efficiency</div>
                     <div>• Takeoff distance increases, climb rate decreases</div>
                     <div>• Cruise speed may be lower than expected</div>
@@ -254,7 +250,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
 
               <div className="mt-6">
                 <h4 className="font-medium mb-2">Formulas Used:</h4>
-                <div className={`text-sm p-3 rounded ${darkMode ? 'bg-theme-card-dark' : 'bg-theme-card'} font-mono space-y-2`}>
+                <div className="text-sm p-3 rounded bg-black font-mono space-y-2">
                   <div>PA = Elevation + (29.92 - Altimeter) × 1000</div>
                   <div>DA = PA + (120 × (OAT - ISA))</div>
                   <div>ISA = 15°C - (PA ÷ 1000) × 2°C</div>
@@ -281,9 +277,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
                   placeholder="Enter temperature"
                   value={temperature}
                   onChange={(e) => setTemperature(e.target.value)}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white focus:border-red-600"
                 />
               </div>
 
@@ -298,9 +292,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
                   placeholder="Enter dew point"
                   value={dewPoint}
                   onChange={(e) => setDewPoint(e.target.value)}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white focus:border-red-600"
                 />
               </div>
             </div>
@@ -308,19 +300,17 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
             <div className="flex justify-center mb-6">
               <button
                 onClick={clearInputs}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                  darkMode ? 'bg-theme-card-dark hover:bg-theme-accent-dark/20 text-theme-primary-dark' : 'bg-theme-header hover:bg-theme-accent/10 text-theme-primary'
-                }`}
+                className="px-6 py-2 rounded-md text-sm font-medium transition-colors bg-zinc-900 hover:bg-zinc-800 text-zinc-100"
               >
                 Clear Inputs
               </button>
             </div>
 
-            <div className={`p-6 rounded-lg ${darkMode ? 'bg-theme-card-dark' : 'bg-theme-header'}`}>
+            <div className="p-6 rounded-lg bg-zinc-900">
               <h4 className="text-lg font-semibold mb-4">Cloud Base Result</h4>
               {cloudBaseResult !== null ? (
                 <div className="text-center">
-                  <div className={`text-3xl font-bold mb-2 ${darkMode ? 'text-theme-accent-dark' : 'text-theme-accent'}`}>
+                  <div className="text-3xl font-bold mb-2 text-red-500">
                     {cloudBaseResult.toLocaleString()} ft
                   </div>
                   <div className="text-sm opacity-75">AGL Cloud Base</div>
@@ -339,7 +329,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
 
               <div className="mt-6">
                 <h4 className="font-medium mb-2">Formula Used:</h4>
-                <div className={`text-sm p-3 rounded ${darkMode ? 'bg-gray-800' : 'bg-white'} font-mono`}>
+                <div className="text-sm p-3 rounded bg-black font-mono">
                   Cloud Base = (Temp - Dew Point) / 2.5 × 1000 ft
                 </div>
               </div>

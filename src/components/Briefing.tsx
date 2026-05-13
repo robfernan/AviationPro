@@ -179,8 +179,8 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
                   loading || !briefingData.departureAirport
                     ? 'bg-gray-400 text-white cursor-not-allowed'
                     : darkMode
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
+                    : 'bg-theme-accent text-white hover:bg-theme-accent/80'
                 }`}
               >
                 {loading && <Loader2 size={18} className="animate-spin" />}
@@ -406,8 +406,8 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
           onClick={handleGeneratePDF}
           className={`flex items-center gap-2 px-6 py-3 rounded font-semibold transition ${
             darkMode
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-blue-500 text-white hover:bg-blue-600'
+              ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
+              : 'bg-theme-accent text-white hover:bg-theme-accent/80'
           }`}
         >
           <Download size={20} />

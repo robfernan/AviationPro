@@ -205,8 +205,8 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
             onClick={createDefaultChecklists}
             className={`px-6 py-3 rounded font-semibold transition ${
               darkMode
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-blue-500 text-white hover:bg-blue-600'
+                ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
+                : 'bg-theme-accent text-white hover:bg-theme-accent/80'
             }`}
           >
             Create Default Checklists
@@ -231,8 +231,8 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
                   className={`w-full text-left px-4 py-3 rounded transition ${
                     selectedChecklistId === checklist.id
                       ? darkMode
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-blue-500 text-white'
+                        ? 'bg-theme-accent-dark text-white'
+                        : 'bg-theme-accent text-white'
                       : darkMode
                       ? 'bg-slate-800 text-slate-200 hover:bg-slate-700'
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
@@ -381,8 +381,8 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
                 onClick={handleSaveChecklist}
                 className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded font-semibold transition ${
                   darkMode
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
+                    : 'bg-theme-accent text-white hover:bg-theme-accent/80'
                 }`}
               >
                 <Save size={20} />
@@ -396,7 +396,7 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
                 </div>
                 <div className={`w-full h-2 rounded ${darkMode ? 'bg-slate-700' : 'bg-gray-200'}`}>
                   <div
-                    className={`h-2 rounded transition-all ${darkMode ? 'bg-blue-600' : 'bg-blue-500'}`}
+                    className={`h-2 rounded transition-all ${darkMode ? 'bg-theme-accent-dark' : 'bg-theme-accent'}`}
                     style={{
                       width: editingChecklist.items.length > 0
                         ? `${(editingChecklist.items.filter(i => i.completed).length / editingChecklist.items.length) * 100}%`

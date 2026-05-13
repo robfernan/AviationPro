@@ -22,7 +22,7 @@ const ToolsHub: React.FC<ToolsHubProps> = ({ darkMode }) => {
   return (
     <div className="w-full space-y-4">
       {/* Sub-tabs */}
-      <div className={`border-b ${darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-white'}`}>
+      <div className="flex flex-wrap bg-black border border-zinc-800 rounded-sm overflow-hidden">
         <div className="flex gap-0">
           {tools.map(tool => {
             const Icon = tool.icon;
@@ -30,14 +30,10 @@ const ToolsHub: React.FC<ToolsHubProps> = ({ darkMode }) => {
               <button
                 key={tool.id}
                 onClick={() => setActiveTool(tool.id as any)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
+                className={`flex items-center justify-center gap-2 px-4 py-4 text-[9px] font-black tracking-widest border-r border-zinc-800 transition-all ${
                   activeTool === tool.id
-                    ? darkMode
-                      ? 'border-blue-500 text-blue-400'
-                      : 'border-blue-500 text-blue-600'
-                    : darkMode
-                    ? 'border-transparent text-slate-400 hover:text-slate-200'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                    ? 'bg-red-700 text-white shadow-[inset_0_0_20px_rgba(0,0,0,0.4)]'
+                    : 'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900/50'
                 }`}
               >
                 <Icon size={18} />
@@ -49,7 +45,9 @@ const ToolsHub: React.FC<ToolsHubProps> = ({ darkMode }) => {
       </div>
 
       {/* Tool Content */}
-      <ActiveComponent darkMode={darkMode} />
+      <div className="rounded-lg">
+        <ActiveComponent darkMode={darkMode} />
+      </div>
     </div>
   );
 };

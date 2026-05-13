@@ -516,7 +516,7 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
         </div>
 
         {/* Mobile scroll hint */}
-        <div className="lg:hidden mb-3 text-xs text-center py-2 px-3 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+        <div className="lg:hidden mb-3 text-xs text-center py-2 px-3 rounded bg-theme-header dark:bg-theme-header-dark text-theme-secondary dark:text-theme-secondary-dark border border-theme-accent/30 dark:border-theme-accent-dark/30">
           ← Swipe left/right to view all table columns →
         </div>
 

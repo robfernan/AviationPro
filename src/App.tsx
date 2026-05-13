@@ -31,13 +31,13 @@ const App: React.FC = () => {
           <span className="text-red-600 font-black tracking-tighter text-xl italic">AVPRO</span>
         </div>
         
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar" style={{ ["--wails-draggable" as any]: "no-drag" }}>
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-black border border-zinc-800 rounded-sm px-1" style={{ ["--wails-draggable" as any]: "no-drag" }}>
           {(['PLANNER', 'WEATHER', 'LOGS', 'HANGAR', 'TOOLS'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1 text-[10px] font-bold tracking-widest transition-all border-b-2 shrink-0 ${
-                activeTab === tab ? 'border-red-600 bg-zinc-800 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+              className={`min-w-[70px] px-3 py-3 text-[9px] font-black tracking-widest transition-all border-r border-zinc-800 shrink-0 ${
+                activeTab === tab ? 'bg-red-700 text-white shadow-[inset_0_0_20px_rgba(0,0,0,0.4)]' : 'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900/50'
               }`}
             >
               {/* Responsive Labeling */}

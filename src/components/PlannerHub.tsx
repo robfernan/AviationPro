@@ -24,7 +24,7 @@ const PlannerHub: React.FC<PlannerHubProps> = ({ darkMode }) => {
   return (
     <div className="w-full space-y-4">
       {/* Planning Sub-tabs */}
-      <div className={`border-b ${darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-white'}`}>
+      <div className="flex flex-wrap bg-black border border-zinc-800 rounded-sm overflow-hidden">
         <div className="flex gap-0 overflow-x-auto">
           {plannerTabs.map(tab => {
             const Icon = tab.icon;
@@ -32,14 +32,10 @@ const PlannerHub: React.FC<PlannerHubProps> = ({ darkMode }) => {
               <button
                 key={tab.id}
                 onClick={() => setActivePlannerTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap flex-shrink-0 ${
+                className={`flex items-center justify-center gap-2 px-4 py-4 text-[9px] font-black tracking-widest border-r border-zinc-800 transition-all whitespace-nowrap flex-shrink-0 ${
                   activePlannerTab === tab.id
-                    ? darkMode
-                      ? 'border-green-500 text-green-400'
-                      : 'border-green-600 text-green-700'
-                    : darkMode
-                    ? 'border-transparent text-slate-400 hover:text-slate-200'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                    ? 'bg-red-700 text-white shadow-[inset_0_0_20px_rgba(0,0,0,0.4)]'
+                    : 'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900/50'
                 }`}
               >
                 <Icon size={18} />

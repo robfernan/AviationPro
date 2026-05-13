@@ -196,21 +196,17 @@ const NavigationTools: React.FC<NavigationToolsProps> = ({ darkMode }) => {
         darkMode ? 'border-slate-800' : 'border-slate-200'
       } p-6`}>
         <h2 className="text-2xl font-bold mb-4">Navigation Tools</h2>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap bg-black border border-zinc-800 rounded-sm overflow-hidden">
           {tools.map((tool) => {
             const Icon = tool.icon;
             return (
               <button
                 key={tool.id}
                 onClick={() => setActiveTool(tool.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center justify-center space-x-2 px-4 py-4 text-[9px] font-black tracking-widest border-r border-zinc-800 transition-all duration-200 ${
                   activetool === tool.id
-                    ? darkMode
-                      ? 'bg-cyan-500 text-white'
-                      : 'bg-sky-600 text-white'
-                      : darkMode
-                      ? 'bg-slate-900 text-slate-300 hover:bg-slate-800'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-red-700 text-white shadow-[inset_0_0_20px_rgba(0,0,0,0.4)]'
+                    : 'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900/50'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -564,7 +560,7 @@ const NavigationTools: React.FC<NavigationToolsProps> = ({ darkMode }) => {
               ))}
             </div>
 
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-blue-900' : 'bg-theme-header'}`}>
+            <div className={`p-4 rounded-lg ${darkMode ? 'bg-theme-header-dark' : 'bg-theme-header'}`}>
               <h4 className="font-semibold mb-2">Weather Briefing Tips</h4>
               <ul className="text-sm space-y-1">
                 <li>• Always get an official briefing before flight</li>

@@ -190,24 +190,16 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
   };
 
   return (
-    <div
-      className={`${darkMode ? 'bg-theme-card-dark' : 'bg-theme-card'} rounded-lg shadow-lg border ${
-        darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'
-      }`}
-    >
-      <div
-        className={`${darkMode ? 'bg-theme-header-dark' : 'bg-theme-header'} border-b ${
-          darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'
-        } p-6`}
-      >
+    <div className={darkMode ? 'rounded-lg shadow-lg border border-zinc-800 bg-black' : 'rounded-lg shadow-lg border border-zinc-800 bg-black'}>
+      <div className="bg-zinc-900 border-b border-zinc-800 p-6">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <FileText className={`w-6 h-6 ${darkMode ? 'text-theme-accent-dark' : 'text-theme-accent'}`} />
+            <FileText className="w-6 h-6 text-red-500" />
             <h2 className="text-2xl font-bold">Flight Logs</h2>
           </div>
           <div className="text-right">
             <div className="text-sm opacity-75">Total Flight Time</div>
-            <div className="text-xl font-bold text-theme-accent dark:text-theme-accent-dark">
+            <div className="text-xl font-bold text-red-500">
               {formatFlightTime(totalFlightTime)} hrs
             </div>
           </div>
@@ -222,7 +214,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
             <button
               onClick={exportToCSV}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                darkMode ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-900'
+                'bg-zinc-900 hover:bg-zinc-800 text-zinc-100'
               }`}
             >
               <Download className="w-4 h-4" />
@@ -231,7 +223,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
             <button
               onClick={() => setIsAdding(!isAdding)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                darkMode ? 'bg-theme-accent-dark hover:bg-theme-accent-dark/80 text-white' : 'bg-theme-accent hover:bg-theme-accent/80 text-white'
+                'bg-red-700 hover:bg-red-800 text-white'
               }`}
             >
               <Plus className="w-4 h-4" />
@@ -242,14 +234,14 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
 
         <div className="grid grid-cols-1 gap-3 mb-6 lg:grid-cols-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary dark:text-theme-secondary-dark" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search aircraft, notes, or date"
               className={`w-full pl-10 pr-3 py-3 border rounded-md ${
-                darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
+                'bg-black border-zinc-800 text-white'
               }`}
             />
           </div>
@@ -257,7 +249,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value as typeof dateFilter)}
             className={`w-full px-3 py-3 border rounded-md ${
-              darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
+              'bg-black border-zinc-800 text-white'
             }`}
           >
             <option value="all">All dates</option>
@@ -269,7 +261,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             className={`w-full px-3 py-3 border rounded-md ${
-              darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
+              'bg-black border-zinc-800 text-white'
             }`}
           >
             <option value="date-desc">Newest first</option>
@@ -280,7 +272,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
         </div>
 
         {isAdding && (
-          <div className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-theme-card-dark' : 'bg-theme-card'}`}>
+          <div className="mb-6 p-4 rounded-lg bg-zinc-900">
             <h4 className="font-medium mb-4">Add New Flight Log</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -292,9 +284,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   type="date"
                   value={newLog.date}
                   onChange={(e) => setNewLog({ ...newLog, date: e.target.value })}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
                 />
               </div>
 
@@ -308,9 +298,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   placeholder="N12345"
                   value={newLog.aircraftNNumber}
                   onChange={(e) => setNewLog({ ...newLog, aircraftNNumber: e.target.value })}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
                 />
               </div>
 
@@ -325,9 +313,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   placeholder="1.5"
                   value={newLog.flightTime}
                   onChange={(e) => setNewLog({ ...newLog, flightTime: e.target.value })}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
                 />
               </div>
 
@@ -340,7 +326,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                     { key: 'solo', label: 'Solo' },
                     { key: 'dual', label: 'Dual' }
                   ].map((option) => (
-                    <label key={option.key} className={`flex items-center gap-2 rounded-md border p-3 text-sm ${darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'}`}>
+                    <label key={option.key} className="flex items-center gap-2 rounded-md border border-zinc-800 p-3 text-sm">
                       <input
                         type="checkbox"
                         checked={newLog[option.key as keyof typeof newLog] as boolean}
@@ -362,9 +348,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   value={newLog.notes}
                   onChange={(e) => setNewLog({ ...newLog, notes: e.target.value })}
                   rows={3}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
                 />
               </div>
             </div>
@@ -372,15 +356,13 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
             <div className="flex justify-end space-x-3 mt-4">
               <button
                 onClick={() => setIsAdding(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  darkMode ? 'bg-theme-card-dark hover:bg-theme-accent-dark/20 text-theme-primary-dark' : 'bg-theme-card hover:bg-theme-accent/10 text-theme-primary'
-                }`}
+                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-zinc-900 hover:bg-zinc-800 text-zinc-100"
               >
                 Cancel
               </button>
               <button
                 onClick={addFlightLog}
-                className="px-4 py-2 bg-theme-accent dark:bg-theme-accent-dark hover:bg-theme-accent/80 dark:hover:bg-theme-accent-dark/80 text-white rounded-md text-sm font-medium transition-colors"
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-md text-sm font-medium transition-colors"
               >
                 Save Flight Log
               </button>
@@ -389,7 +371,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
         )}
 
         {editingId && editLog && (
-          <div className={`mb-6 p-4 rounded-lg border-2 border-yellow-500 ${darkMode ? 'bg-yellow-900/20' : 'bg-yellow-50'}`}>
+          <div className="mb-6 p-4 rounded-lg border-2 border-yellow-500 bg-zinc-950/80">
             <h4 className="font-medium mb-4 text-yellow-700 dark:text-yellow-300">Edit Flight Log</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -401,9 +383,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   type="date"
                   value={editLog.date}
                   onChange={(e) => setEditLog({ ...editLog, date: e.target.value })}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
                 />
               </div>
 
@@ -417,9 +397,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   placeholder="N12345"
                   value={editLog.aircraftNNumber}
                   onChange={(e) => setEditLog({ ...editLog, aircraftNNumber: e.target.value })}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
                 />
               </div>
 
@@ -434,9 +412,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   placeholder="1.5"
                   value={editLog.flightTime}
                   onChange={(e) => setEditLog({ ...editLog, flightTime: e.target.value })}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
                 />
               </div>
 
@@ -449,7 +425,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                     { key: 'solo', label: 'Solo' },
                     { key: 'dual', label: 'Dual' }
                   ].map((option) => (
-                    <label key={option.key} className={`flex items-center gap-2 rounded-md border p-3 text-sm ${darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'}`}>
+                    <label key={option.key} className="flex items-center gap-2 rounded-md border border-zinc-800 p-3 text-sm">
                       <input
                         type="checkbox"
                         checked={Boolean(editLog[option.key as keyof FlightLog])}
@@ -471,9 +447,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   value={editLog.notes}
                   onChange={(e) => setEditLog({ ...editLog, notes: e.target.value })}
                   rows={3}
-                  className={`w-full p-3 border rounded-md ${
-                    darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                  }`}
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
                 />
               </div>
             </div>
@@ -481,15 +455,13 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
             <div className="flex justify-end space-x-3 mt-4">
               <button
                 onClick={cancelEdit}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  darkMode ? 'bg-theme-card-dark hover:bg-theme-accent-dark/20 text-theme-primary-dark' : 'bg-theme-card hover:bg-theme-accent/10 text-theme-primary'
-                }`}
+                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-zinc-900 hover:bg-zinc-800 text-zinc-100"
               >
                 Cancel
               </button>
               <button
                 onClick={updateFlightLog}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-sm font-medium transition-colors"
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-md text-sm font-medium transition-colors"
               >
                 Update Flight Log
               </button>
@@ -497,9 +469,9 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
           </div>
         )}
 
-        <div className={`overflow-x-auto rounded-lg border ${darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'}`}>
+        <div className="overflow-x-auto rounded-lg border border-zinc-800">
           <table className="min-w-full text-sm">
-            <thead className={darkMode ? 'bg-slate-900 text-slate-200' : 'bg-slate-100 text-slate-700'}>
+            <thead className="bg-zinc-900 text-white">
               <tr>
                 <th className="px-4 py-3 text-left font-semibold">Date</th>
                 <th className="px-4 py-3 text-left font-semibold">Aircraft</th>
@@ -522,35 +494,35 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                 filteredLogs.map((log) => (
                   <tr
                     key={log.id}
-                    className={`${darkMode ? 'border-slate-700 hover:bg-slate-800/60' : 'border-slate-200 hover:bg-slate-50'} border-t ${
+                    className={`border-t border-zinc-800 hover:bg-zinc-900/70 ${
                       editingId === log.id ? 'bg-yellow-50/40 dark:bg-yellow-900/20' : ''
                     }`}
                   >
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-theme-accent dark:text-theme-accent-dark" />
+                        <Calendar className="w-4 h-4 text-red-500" />
                         {new Date(log.date).toLocaleDateString()}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <Plane className="w-4 h-4 text-theme-accent dark:text-theme-accent-dark" />
+                        <Plane className="w-4 h-4 text-red-500" />
                         <span className="font-medium">{log.aircraftNNumber}</span>
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <Clock className="w-4 h-4 text-red-500" />
                         <span className="font-medium">{log.flightTime} hrs</span>
                       </div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-1">
-                        {log.night && <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-medium text-slate-800 dark:bg-slate-700 dark:text-slate-100">Night</span>}
-                        {log.crossCountry && <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-200">XC</span>}
+                        {log.night && <span className="rounded-full bg-zinc-900 px-2 py-1 text-xs font-medium text-zinc-100">Night</span>}
+                        {log.crossCountry && <span className="rounded-full bg-red-700/20 px-2 py-1 text-xs font-medium text-red-300">XC</span>}
                         {log.solo && <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">Solo</span>}
                         {log.dual && <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Dual</span>}
-                        {!log.night && !log.crossCountry && !log.solo && !log.dual && <span className="text-slate-400">None</span>}
+                        {!log.night && !log.crossCountry && !log.solo && !log.dual && <span className="text-zinc-500">None</span>}
                       </div>
                     </td>
                     <td className="px-4 py-4 max-w-md">
@@ -562,7 +534,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                       <div className="inline-flex items-center gap-2">
                         <button
                           onClick={() => startEditingLog(log)}
-                          className="text-blue-500 hover:text-blue-700 p-1 transition-colors"
+                          className="text-red-500 hover:text-red-400 p-1 transition-colors"
                           title="Edit flight log"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -584,38 +556,38 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
         </div>
 
         {flightLogs.length > 0 && (
-          <div className="mt-6 p-4 bg-theme-header dark:bg-theme-header-dark rounded-lg">
-            <h4 className="font-medium mb-2 text-theme-primary dark:text-theme-primary-dark">Flight Summary</h4>
+          <div className="mt-6 p-4 bg-zinc-900 rounded-lg">
+            <h4 className="font-medium mb-2 text-white">Flight Summary</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Total Flights</div>
-                <div className="font-bold text-lg text-theme-primary dark:text-theme-primary-dark">{flightLogs.length}</div>
+                <div className="opacity-75 text-zinc-400">Total Flights</div>
+                <div className="font-bold text-lg text-white">{flightLogs.length}</div>
               </div>
               <div>
-                <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Total Hours</div>
-                <div className="font-bold text-lg text-theme-primary dark:text-theme-primary-dark">{formatFlightTime(totalFlightTime)}</div>
+                <div className="opacity-75 text-zinc-400">Total Hours</div>
+                <div className="font-bold text-lg text-white">{formatFlightTime(totalFlightTime)}</div>
               </div>
               <div>
-                <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Average Flight</div>
-                <div className="font-bold text-lg text-theme-primary dark:text-theme-primary-dark">{formatFlightTime(averageFlightTime)}</div>
+                <div className="opacity-75 text-zinc-400">Average Flight</div>
+                <div className="font-bold text-lg text-white">{formatFlightTime(averageFlightTime)}</div>
               </div>
               <div>
-                <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Aircraft Flown</div>
-                <div className="font-bold text-lg text-theme-primary dark:text-theme-primary-dark">{uniqueAircraftCount}</div>
+                <div className="opacity-75 text-zinc-400">Aircraft Flown</div>
+                <div className="font-bold text-lg text-white">{uniqueAircraftCount}</div>
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Night Flights</div>
-                <div className="font-bold text-lg text-theme-primary dark:text-theme-primary-dark">{nightFlightCount}</div>
+                <div className="opacity-75 text-zinc-400">Night Flights</div>
+                <div className="font-bold text-lg text-white">{nightFlightCount}</div>
               </div>
               <div>
-                <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Cross Country</div>
-                <div className="font-bold text-lg text-theme-primary dark:text-theme-primary-dark">{crossCountryCount}</div>
+                <div className="opacity-75 text-zinc-400">Cross Country</div>
+                <div className="font-bold text-lg text-white">{crossCountryCount}</div>
               </div>
               <div>
-                <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Solo Flights</div>
-                <div className="font-bold text-lg text-theme-primary dark:text-theme-primary-dark">{soloFlightCount}</div>
+                <div className="opacity-75 text-zinc-400">Solo Flights</div>
+                <div className="font-bold text-lg text-white">{soloFlightCount}</div>
               </div>
               <div>
                 <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Dual Flights</div>
