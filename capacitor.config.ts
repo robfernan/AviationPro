@@ -1,18 +1,11 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+// capacitor.config.ts
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.aviationpro.app',
   appName: 'AviationPro',
-  webDir: 'dist',
-  server: {
-    androidScheme: 'https'
-  },
-  plugins: {
-    SplashScreen: {
-      launchAutoHide: true,
-      launchShowDuration: 3000,
-    },
-  }
+  webDir: 'dist', // Ensure this matches your Vite output!
+  server: { androidScheme: 'https' }
 };
 
 export default config;

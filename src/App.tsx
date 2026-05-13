@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAviation } from './hooks/useAviation';
 import { WeatherReport, WCAResult } from './types/aviation';
+import { CGEnvelope } from './components/CGEnvelope';
 
-// Wails Runtime Helpers
+// Wails Runtime Helpers - provided by Wails at runtime
 const runtime = (window as any).runtime;
 const isDesktop = !!runtime;
 
@@ -19,6 +20,10 @@ const App: React.FC = () => {
   const [windSpd, setWindSpd] = useState(0);
   const [wcaResult, setWcaResult] = useState<WCAResult | null>(null);
 
+  // Weight & Balance State (The visual "Adobe Pro" data)
+  const [curWeight, setCurWeight] = useState(2300);
+  const [curCG, setCurCG] = useState(41);
+
   // Weather State
   const [icao, setIcao] = useState("");
   const [weather, setWeather] = useState<WeatherReport | null>(null);
@@ -34,7 +39,7 @@ const App: React.FC = () => {
 
   const handleQuit = () => isDesktop && runtime.Quit();
   const handleMinimise = () => isDesktop && runtime.WindowMinimise();
-
+  
   const handleCalcWCA = () => {
     const result = math.calculateWCA(course, tas, windDir, windSpd);
     setWcaResult(result);
@@ -111,39 +116,55 @@ const App: React.FC = () => {
       {/* 📱 MAIN VIEWPORT */}
       <main className="flex-1 overflow-y-auto p-6 max-w-7xl mx-auto w-full">
         
-        {/* TAB: PLANNER */}
+        {/* TAB: PLANNER (The Mission Control Grid) */}
         {activeTab === 'PLANNER' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 animate-in fade-in duration-500">
+            
+            {/* LEFT COLUMN: CX-6 FLIGHT COMPUTER */}
             <section className="space-y-6">
-              <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase">CX-6 Computer</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase">CX-6 Computer</h2>
+                {wcaResult && (
+                  <button onClick={handleSaveToLog} className="bg-zinc-800 text-[9px] px-3 py-1 hover:bg-zinc-700 uppercase font-black text-zinc-400">
+                    Commit to Log
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <Input label="COURSE" value={course} onChange={(v) => setCourse(Number(v))} unit="°" />
                 <Input label="TAS" value={tas} onChange={(v) => setTas(Number(v))} unit="KT" />
                 <Input label="WIND DIR" value={windDir} onChange={(v) => setWindDir(Number(v))} unit="°" />
                 <Input label="WIND SPD" value={windSpd} onChange={(v) => setWindSpd(Number(v))} unit="KT" />
               </div>
-              <div className="flex gap-2">
-                <button onClick={handleCalcWCA} className="flex-1 bg-zinc-100 text-black py-4 font-black hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest">
-                  Calculate
-                </button>
-                {wcaResult && (
-                  <button onClick={handleSaveToLog} className="bg-zinc-800 text-white px-4 hover:bg-zinc-700 transition-all uppercase text-[10px] font-bold">
-                    Save to Log
-                  </button>
-                )}
-              </div>
+              <button onClick={handleCalcWCA} className="w-full bg-zinc-100 text-black py-4 font-black hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest">
+                Calculate Solution
+              </button>
+              
+              {wcaResult && (
+                <div className="mt-8 space-y-4 bg-zinc-900/20 p-6 border border-zinc-900 animate-in slide-in-from-left-4">
+                  <ResultBlock label="HEADING (TH)" value={`${wcaResult.heading}°`} />
+                  <ResultBlock label="GROUND SPEED" value={`${wcaResult.groundSpeed} KT`} />
+                  <ResultBlock label="WIND CORRECTION" value={`${wcaResult.windCorrectionAngle}°`} color="text-red-500" />
+                </div>
+              )}
             </section>
 
-            <section className="bg-zinc-900/30 border border-zinc-800 p-8 flex flex-col justify-center min-h-[300px]">
-                {wcaResult ? (
-                  <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                    <ResultBlock label="HEADING (TH)" value={`${wcaResult.heading}°`} />
-                    <ResultBlock label="GROUND SPEED" value={`${wcaResult.groundSpeed} KT`} />
-                    <ResultBlock label="WIND CORRECTION" value={`${wcaResult.windCorrectionAngle}°`} color="text-red-500" />
-                  </div>
-                ) : (
-                  <div className="text-zinc-700 italic text-center uppercase tracking-widest text-xs">Awaiting navigational inputs...</div>
-                )}
+            {/* RIGHT COLUMN: WEIGHT & BALANCE (Visual precision) */}
+            <section className="space-y-6">
+              <h2 className="text-xl font-black border-l-4 border-red-700 pl-3 uppercase">Weight & Balance</h2>
+              <div className="grid grid-cols-2 gap-4">
+                 <Input label="Total Weight" value={curWeight} onChange={(v) => setCurWeight(Number(v))} unit="LBS" />
+                 <Input label="Calculated CG" value={curCG} onChange={(v) => setCurCG(Number(v))} unit="IN" />
+              </div>
+              
+              {/* THE SVG ENVELOPE COMPONENT */}
+              <div className="mt-4 shadow-2xl shadow-red-900/5">
+                <CGEnvelope cg={curCG} weight={curWeight} />
+              </div>
+              
+              <div className="text-[10px] text-zinc-600 bg-zinc-900/30 p-4 border border-zinc-800 leading-relaxed uppercase">
+                Note: Ensure Center of Gravity remains within the normal category envelope for the specific airframe make/model.
+              </div>
             </section>
           </div>
         )}
