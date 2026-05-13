@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Flight Log" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <meta name="theme-color" content="#0f172a">
+
+    <%= yield :head %>
+
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Ruby on Rails + Hotwire</p>
+          <%= link_to "Flight Log", root_path, class: "brand" %>
+        </div>
+
+        <nav class="topbar-actions">
+          <%= link_to "All Flights", flights_path, class: "nav-link" %>
+          <%= link_to "New Flight", new_flight_path, class: "button button-primary" %>
+        </nav>
+      </header>
+
+      <main class="app-container">
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

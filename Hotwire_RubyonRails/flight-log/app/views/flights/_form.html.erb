@@ -1,0 +1,123 @@
+<%= form_with(model: flight, class: "field-grid") do |form| %>
+  <% if flight.errors.any? %>
+    <div id="error_explanation" class="error-box">
+      <h2><%= pluralize(flight.errors.count, "error") %> prevented this flight from being saved:</h2>
+
+      <ul>
+        <% flight.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field-columns">
+    <div class="field">
+      <%= form.label :flight_date, class: "field-label" %>
+      <%= form.date_field :flight_date, class: "field-input" %>
+      <p class="field-help">When did the flight happen?</p>
+    </div>
+
+    <div class="field">
+      <%= form.label :flight_time, class: "field-label" %>
+      <%= form.number_field :flight_time, step: 0.1, class: "field-input" %>
+      <p class="field-help">Total flight time in hours.</p>
+    </div>
+
+    <div class="field">
+      <%= form.label :departure_time, class: "field-label" %>
+      <%= form.datetime_local_field :departure_time, class: "field-input" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :arrival_time, class: "field-label" %>
+      <%= form.datetime_local_field :arrival_time, class: "field-input" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :pilot_role, class: "field-label" %>
+      <%= form.select :pilot_role, options_for_select([ ["Unspecified", nil], ["PIC", "pic"], ["SIC", "sic"], ["Solo", "solo"], ["Dual received", "dual_received"], ["Dual given", "dual_given"] ], flight.pilot_role), {}, class: "field-select" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :flight_type, class: "field-label" %>
+      <%= form.select :flight_type, options_for_select(["local", "cross country", "training", "checkride", "ferry", "business", "other"], flight.flight_type), {}, class: "field-select" %>
+    </div>
+  </div>
+
+  <div class="field-columns">
+    <div class="field">
+      <%= form.label :departure_airport, class: "field-label" %>
+      <%= form.text_field :departure_airport, class: "field-input", placeholder: "KSEE" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :arrival_airport, class: "field-label" %>
+      <%= form.text_field :arrival_airport, class: "field-input", placeholder: "KSAN" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :aircraft_registration, class: "field-label" %>
+      <%= form.text_field :aircraft_registration, class: "field-input", placeholder: "N12345" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :aircraft_type, class: "field-label" %>
+      <%= form.text_field :aircraft_type, class: "field-input", placeholder: "Cessna 172" %>
+    </div>
+  </div>
+
+  <div class="field-columns">
+    <label class="field-check">
+      <%= form.check_box :solo %>
+      <span>Solo flight</span>
+    </label>
+
+    <label class="field-check">
+      <%= form.check_box :cross_country %>
+      <span>Cross-country</span>
+    </label>
+
+    <label class="field-check">
+      <%= form.check_box :night %>
+      <span>Night flight</span>
+    </label>
+
+    <label class="field-check">
+      <%= form.check_box :instructor %>
+      <span>Instructor on board</span>
+    </label>
+  </div>
+
+  <div class="field-columns">
+    <div class="field">
+      <%= form.label :takeoffs, class: "field-label" %>
+      <%= form.number_field :takeoffs, class: "field-input" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :landings, class: "field-label" %>
+      <%= form.number_field :landings, class: "field-input" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :actual_instrument, class: "field-label" %>
+      <%= form.number_field :actual_instrument, step: 0.1, class: "field-input" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :simulated_instrument, class: "field-label" %>
+      <%= form.number_field :simulated_instrument, step: 0.1, class: "field-input" %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= form.label :notes, class: "field-label" %>
+    <%= form.text_area :notes, rows: 5, class: "field-textarea", placeholder: "Weather, maneuvers, instructor notes, anything worth remembering..." %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button button-primary" %>
+    <%= link_to "Back to flights", flights_path, class: "button button-secondary" %>
+  </div>
+<% end %>

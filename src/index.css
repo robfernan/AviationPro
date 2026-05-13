@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	html,
+	body,
+	#root {
+		min-height: 100%;
+	}
+
+	body {
+		margin: 0;
+		background: #f8fafc;
+		color: #0f172a;
+	}
+
+	html.dark body {
+		background: #020617;
+		color: #e2e8f0;
+	}
+
+	html.dark table {
+		color: #e2e8f0;
+	}
+
+	html.dark table th,
+	html.dark table td {
+		color: #e2e8f0;
+	}
+
+	html.dark input:not([type='checkbox']):not([type='radio']):not([type='range']),
+	html.dark textarea,
+	html.dark select,
+	html.dark [contenteditable='true'] {
+		background-color: #ffffff;
+		color: #000000;
+		caret-color: #000000;
+	}
+
+	html.dark table input:not([type='checkbox']):not([type='radio']):not([type='range']),
+	html.dark table select,
+	html.dark table textarea {
+		color: #000000;
+		caret-color: #000000;
+	}
+
+	html.dark table input::placeholder,
+	html.dark table textarea::placeholder {
+		color: #475569;
+	}
+
+	html.dark table input:disabled,
+	html.dark table select:disabled,
+	html.dark table textarea:disabled {
+		color: #111827;
+		opacity: 1;
+	}
+}

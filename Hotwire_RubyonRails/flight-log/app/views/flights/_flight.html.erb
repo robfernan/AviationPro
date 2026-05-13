@@ -1,0 +1,32 @@
+<tr id="<%= dom_id flight %>">
+  <td><%= flight.flight_date&.strftime("%b %d, %Y") %></td>
+  <td>
+    <strong><%= flight.route_label %></strong><br>
+    <span class="muted"><%= flight.flight_type.titleize %></span>
+  </td>
+  <td>
+    <strong><%= flight.aircraft_registration %></strong><br>
+    <span class="muted"><%= flight.aircraft_type %></span>
+  </td>
+  <td>
+    <strong><%= format_hours(flight.total_time_hours) %> hrs</strong><br>
+    <span class="muted"><%= format_hours(flight.instrument_time_hours) %> instr.</span>
+  </td>
+  <td>
+    <span class="badge <%= flight_role_badge_class(flight) %>"><%= flight.pilot_role_label %></span>
+  </td>
+  <td>
+    <div class="row-actions">
+      <% if flight.solo? %><span class="badge badge-solo">Solo</span><% end %>
+      <% if flight.cross_country? %><span class="badge badge-pic">Cross country</span><% end %>
+      <% if flight.night? %><span class="badge badge-neutral">Night</span><% end %>
+    </div>
+  </td>
+  <td>
+    <div class="row-actions">
+      <%= link_to "Show", flight, class: "button-secondary" %>
+      <%= link_to "Edit", edit_flight_path(flight), class: "button-secondary" %>
+      <%= button_to "Delete", flight, method: :delete, form_class: "inline-form", class: "button-danger", data: { turbo_confirm: "Delete this flight?" } %>
+    </div>
+  </td>
+</tr>

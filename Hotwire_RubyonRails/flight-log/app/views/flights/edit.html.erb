@@ -1,0 +1,15 @@
+<% content_for :title, "Editing flight" %>
+
+<section class="page-stack">
+  <section class="card detail-card">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Update entry</p>
+        <h1 class="section-title">Edit flight</h1>
+        <p class="section-note">Fix a date, tweak a role, or correct the totals without losing the full record.</p>
+      </div>
+    </div>
+
+    <%= render "form", flight: @flight %>
+  </section>
+</section>

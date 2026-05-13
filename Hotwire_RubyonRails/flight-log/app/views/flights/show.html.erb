@@ -1,0 +1,113 @@
+<% content_for :title, @flight.route_label.presence || "Flight details" %>
+
+<section class="page-stack">
+  <% if notice.present? %>
+    <div class="notice-box"><%= notice %></div>
+  <% end %>
+
+  <section class="detail-grid">
+    <article class="card detail-card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Flight record</p>
+          <h1 class="section-title"><%= @flight.route_label %></h1>
+          <p class="section-note"><%= @flight.flight_date&.strftime("%B %d, %Y") %> · <%= @flight.flight_type.titleize %></p>
+        </div>
+
+        <div class="hero-actions">
+          <%= link_to "Edit flight", edit_flight_path(@flight), class: "button button-primary" %>
+          <%= link_to "Back to flights", flights_path, class: "button button-secondary" %>
+        </div>
+      </div>
+
+      <hr class="subtle-divider">
+
+      <div class="details-grid">
+        <div class="detail-item">
+          <span class="detail-label">Aircraft</span>
+          <span class="detail-value"><%= @flight.aircraft_registration %> · <%= @flight.aircraft_type %></span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Pilot role</span>
+          <span class="detail-value"><%= @flight.pilot_role_label %></span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Departure</span>
+          <span class="detail-value"><%= @flight.departure_airport %></span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Arrival</span>
+          <span class="detail-value"><%= @flight.arrival_airport %></span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Departure time</span>
+          <span class="detail-value"><%= @flight.departure_time&.strftime("%b %d, %Y %I:%M %p") || "—" %></span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Arrival time</span>
+          <span class="detail-value"><%= @flight.arrival_time&.strftime("%b %d, %Y %I:%M %p") || "—" %></span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Flight time</span>
+          <span class="detail-value"><%= format_hours(@flight.total_time_hours) %> hours</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Instrument time</span>
+          <span class="detail-value"><%= format_hours(@flight.instrument_time_hours) %> hours</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Takeoffs / landings</span>
+          <span class="detail-value"><%= @flight.takeoffs %> / <%= @flight.landings %></span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Flags</span>
+          <span class="detail-value">
+            <%= @flight.solo? ? "Solo" : "Not solo" %> ·
+            <%= @flight.cross_country? ? "Cross country" : "Local" %> ·
+            <%= @flight.night? ? "Night" : "Day" %>
+          </span>
+        </div>
+      </div>
+
+      <% if @flight.notes.present? %>
+        <div class="detail-item" style="margin-top: 1rem;">
+          <span class="detail-label">Notes</span>
+          <span class="detail-value"><%= simple_format(@flight.notes) %></span>
+        </div>
+      <% end %>
+
+      <div class="page-actions">
+        <%= button_to "Delete flight", @flight, method: :delete, class: "button-danger", data: { turbo_confirm: "Delete this flight?" } %>
+      </div>
+    </article>
+
+    <aside class="card detail-card">
+      <p class="eyebrow">Calculated totals</p>
+      <h2 class="section-title" style="font-size: 1.5rem;">What this flight contributes</h2>
+      <p class="section-note">These totals are what the logbook uses to roll up your progress.</p>
+
+      <div class="metrics-list metrics-list--compact">
+        <div class="metric-item"><span class="metric-label">PIC</span><span class="metric-value"><%= format_hours(@flight.pic_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">SIC</span><span class="metric-value"><%= format_hours(@flight.sic_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Solo</span><span class="metric-value"><%= format_hours(@flight.solo_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Dual received</span><span class="metric-value"><%= format_hours(@flight.dual_received_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Dual given</span><span class="metric-value"><%= format_hours(@flight.dual_given_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Cross country</span><span class="metric-value"><%= format_hours(@flight.cross_country_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Night</span><span class="metric-value"><%= format_hours(@flight.night_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Solo XC</span><span class="metric-value"><%= format_hours(@flight.solo_cross_country_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Night solo</span><span class="metric-value"><%= format_hours(@flight.night_solo_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Day</span><span class="metric-value"><%= format_hours(@flight.day_time_hours) %></span></div>
+        <div class="metric-item"><span class="metric-label">Instrument</span><span class="metric-value"><%= format_hours(@flight.instrument_time_hours) %></span></div>
+      </div>
+    </aside>
+  </section>
+</section>

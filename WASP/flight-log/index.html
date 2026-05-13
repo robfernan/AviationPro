@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WASP Flight Log Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Slight custom tweaks for this prototype */
+      :root{--accent:theme(colors.violet.600);--accent-2:theme(colors.yellow.400)}
+      .sidebar { background: linear-gradient(180deg,#4c1d95 0%, #7c3aed 100%); }
+    </style>
+  </head>
+  <body class="min-h-screen bg-gray-50 text-slate-800">
+    <div class="flex">
+      <aside class="sidebar w-64 p-6 text-yellow-50">
+        <div class="mb-8">
+          <h1 class="text-2xl font-extrabold">WASP Flight Log</h1>
+          <p class="text-sm opacity-90 mt-1">Prototype — client-side store</p>
+        </div>
+        <nav class="space-y-2 text-sm">
+          <a class="block rounded-md px-3 py-2 bg-yellow-600/10 hover:bg-yellow-600/20">Dashboard</a>
+          <a class="block rounded-md px-3 py-2 hover:bg-yellow-600/10">Flights</a>
+          <a class="block rounded-md px-3 py-2 hover:bg-yellow-600/10">Import / Export</a>
+        </nav>
+        <div class="mt-8 text-xs opacity-80">
+          <p>Different look: violet & yellow, left-nav layout, localStorage backing.</p>
+        </div>
+      </aside>
+
+      <main class="flex-1 p-8">
+        <header class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold">Flight Dashboard</h2>
+            <p class="text-sm text-slate-500">Client-side WASP prototype with different layout and palette.</p>
+          </div>
+          <div id="counts" class="flex gap-4">
+            <!-- summary cards injected by JS -->
+          </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <section class="col-span-1 bg-white rounded-2xl p-6 shadow">
+            <h3 class="font-semibold mb-4 text-violet-700">Log a flight</h3>
+            <form id="flight-form" class="space-y-3 text-sm">
+              <div>
+                <label class="block text-slate-600">Date</label>
+                <input type="date" id="flight-date" class="w-full border rounded px-3 py-2" />
+              </div>
+              <div>
+                <label class="block text-slate-600">Hours</label>
+                <input type="number" step="0.1" id="flight-hours" class="w-full border rounded px-3 py-2" placeholder="1.2" />
+              </div>
+              <div>
+                <label class="block text-slate-600">Role</label>
+                <select id="pilot-role" class="w-full border rounded px-3 py-2">
+                  <option value="">Select</option>
+                  <option value="pic">PIC</option>
+                  <option value="solo">Solo</option>
+                  <option value="sic">SIC</option>
+                </select>
+              </div>
+              <div class="flex gap-2 text-sm">
+                <label class="flex items-center gap-2"><input type="checkbox" id="flag-solo"/> Solo</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="flag-cross"/> Cross-country</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="flag-night"/> Night</label>
+              </div>
+              <div class="flex gap-2">
+                <button type="submit" class="ml-auto rounded px-4 py-2 bg-violet-700 text-yellow-200">Save</button>
+                <button type="button" id="clear" class="rounded px-4 py-2 border">Clear</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="col-span-2 bg-white rounded-2xl p-6 shadow">
+            <h3 class="font-semibold mb-4 text-violet-700">Flights</h3>
+            <div class="overflow-auto max-h-[60vh]">
+              <table class="w-full text-sm" id="flights-table">
+                <thead class="text-left text-slate-500">
+                  <tr><th class="pb-2">Date</th><th class="pb-2">Hours</th><th class="pb-2">Tags</th><th class="pb-2">Actions</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="export-csv" class="rounded px-3 py-2 bg-yellow-600 text-white text-sm">Export CSV</button>
+      <button id="import-csv-btn" class="rounded px-3 py-2 border text-sm">Import CSV</button>
+      <input id="import-file" type="file" accept="text/csv" class="hidden" />
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

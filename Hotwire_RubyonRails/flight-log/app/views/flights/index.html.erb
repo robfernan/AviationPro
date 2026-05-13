@@ -1,0 +1,106 @@
+<% content_for :title, "Flight Log Dashboard" %>
+
+<section class="page-stack">
+  <% if notice.present? %>
+    <div class="notice-box"><%= notice %></div>
+  <% end %>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Personal pilot logbook</p>
+        <h1>Track every hour with a cleaner logbook than paper.</h1>
+        <p class="section-note">Flight Log keeps your flights, pilot roles, and hour categories in one place so you can review your totals instantly.</p>
+      </div>
+
+      <div class="card" style="padding: 1rem; background: rgba(15, 23, 42, 0.55);">
+        <p class="summary-label">Flights logged</p>
+        <strong class="summary-value"><%= @flights.count %></strong>
+        <p class="summary-note">Use the same app to track PIC, solo, night, and cross-country time.</p>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <%= link_to "Add a flight", new_flight_path, class: "button button-primary" %>
+      <%= link_to "Review all flights", flights_path, class: "button button-secondary" %>
+    </div>
+  </section>
+
+  <section class="summary-grid">
+    <article class="summary-card summary-card--accent">
+      <p class="summary-label">Total time</p>
+      <strong class="summary-value"><%= format_hours(@summary[:total_time]) %></strong>
+      <p class="summary-note">All logged flight time</p>
+    </article>
+
+    <article class="summary-card">
+      <p class="summary-label">PIC</p>
+      <strong class="summary-value"><%= format_hours(@summary[:pic_time]) %></strong>
+      <p class="summary-note">Pilot in command</p>
+    </article>
+
+    <article class="summary-card">
+      <p class="summary-label">Solo</p>
+      <strong class="summary-value"><%= format_hours(@summary[:solo_time]) %></strong>
+      <p class="summary-note">Flown alone</p>
+    </article>
+
+    <article class="summary-card">
+      <p class="summary-label">Cross country</p>
+      <strong class="summary-value"><%= format_hours(@summary[:cross_country_time]) %></strong>
+      <p class="summary-note">Cross-country time</p>
+    </article>
+
+    <article class="summary-card">
+      <p class="summary-label">Night</p>
+      <strong class="summary-value"><%= format_hours(@summary[:night_time]) %></strong>
+      <p class="summary-note">Night flights</p>
+    </article>
+
+    <article class="summary-card">
+      <p class="summary-label">Instrument</p>
+      <strong class="summary-value"><%= format_hours(@summary[:instrument_time]) %></strong>
+      <p class="summary-note">Actual + simulated</p>
+    </article>
+  </section>
+
+  <section class="card table-card">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Flight entries</h2>
+        <p class="section-note">Review, edit, or delete each flight from the same dashboard.</p>
+      </div>
+
+      <%= link_to "New flight", new_flight_path, class: "button button-primary" %>
+    </div>
+
+    <hr class="subtle-divider">
+
+    <% if @flights.any? %>
+      <div class="table-wrap">
+        <table class="flights-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Route</th>
+              <th>Aircraft</th>
+              <th>Time</th>
+              <th>Role</th>
+              <th>Flags</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <%= render @flights %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <p>No flights logged yet.</p>
+        <%= link_to "Create your first flight", new_flight_path, class: "button button-primary" %>
+      </div>
+    <% end %>
+  </section>
+</section>

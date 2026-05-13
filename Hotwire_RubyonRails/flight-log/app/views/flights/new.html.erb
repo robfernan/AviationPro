@@ -1,0 +1,15 @@
+<% content_for :title, "New flight" %>
+
+<section class="page-stack">
+  <section class="card detail-card">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">New entry</p>
+        <h1 class="section-title">Log a flight</h1>
+        <p class="section-note">Start with the basic details and the app will calculate the hour categories for you.</p>
+      </div>
+    </div>
+
+    <%= render "form", flight: @flight %>
+  </section>
+</section>

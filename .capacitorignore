@@ -1,0 +1,22 @@
+# Files and directories to exclude from Capacitor sync
+node_modules/
+.git/
+.gitignore
+*.log
+.env
+.env.local
+.DS_Store
+Thumbs.db
+.eslintcache
+dist-old/
+build-old/
+*.bak
+*.tmp
+.vscode/
+.idea/
+src/
+public/
+wails/
+README.md
+CAPACITOR_SETUP.md
+*.md

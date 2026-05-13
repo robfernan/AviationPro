@@ -1,0 +1,34 @@
+[
+  {
+    "id": "c172",
+    "name": "Cessna 172S (sample)",
+    "emptyWeight": 1720.9,
+    "emptyArm": 41.9,
+    "emptyMoment": 72105.7,
+    "cgArm": 41.9,
+    "maxWeight": 2558,
+    "maxTakeoff": 2550,
+    "maxLanding": 2550,
+    "forwardCG": 35.0,
+    "aftCG": 47.3,
+    "fuelArm": 48,
+    "fuelCapacityGal": 53,
+    "usableFuelGal": 53,
+    "fuelWeightLbs": 318,
+    "startupDeductionLbs": 8,
+    "burnedDeductionLbs": 120,
+    "notes": "Cessna 172S sample values per user-provided data."
+  },
+  {
+    "id": "pa28",
+    "name": "Piper PA-28 (sample)",
+    "emptyWeight": 1706.7,
+    "emptyArm": 42.0,
+    "maxWeight": 2550,
+    "forwardCG": 41.5,
+    "aftCG": 47.0,
+    "fuelArm": 48,
+    "fuelCapacityGal": 48,
+    "notes": "Sample PA-28 values."
+  }
+]

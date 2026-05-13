@@ -1,0 +1,14 @@
+{
+  "name": "AviationPro",
+  "outputtype": "desktop",
+  "frontend": {
+    "dir": "../",
+    "wailsjs": "../src/wailsjs"
+  },
+  "build": {
+    "dir": "#THISDIR",
+    "outputdir": "#THISDIR/build",
+    "cmd_default": "npm run build",
+    "cmd_windows": "npm run build"
+  }
+}
