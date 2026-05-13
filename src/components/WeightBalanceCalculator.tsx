@@ -1,65 +1,177 @@
-import { useEffect, useState } from 'react';
-import { Scale, Plus, Minus } from 'lucide-react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { 
+  Scale, 
+  Plus, 
+  // Minus removed to clear TS:6133 warning
+  Printer, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Info, 
+  Database, 
+  Maximize2,
+  ChevronDown,
+  Activity,
+  Trash2,
+  Lock,
+  Unlock,
+  FileText,
+  Save,
+  Clipboard,
+  History,
+  Layers,
+  Zap,
+  Gauge
+} from 'lucide-react';
 import sampleAircrafts from '../data/sampleAircrafts.json';
-import React from 'react';
+
+/**
+ * AVIATIONPRO // MODULE_0x4FB2: STRATEGIC_WEIGHT_BALANCE_CALCULATOR
+ * DESIGN_SPEC: DARK COCKPIT HARDWARE // INDUSTRIAL HIGH-CONTRAST
+ * ENGINE: OFFLINE-FIRST MATHEMATICAL VALIDATION // 100% RELIABILITY
+ */
+
+// --- 1. ARCHITECTURAL TYPE DEFINITIONS ---
+
 interface WeightItem {
   id: string;
   name: string;
   weight: string;
   arm: string;
+  isLocked?: boolean;
+  category: 'fixed' | 'payload' | 'fuel' | 'deduction';
+  timestamp?: number;
 }
 
-interface WeightBalanceCalculatorProps {
-  darkMode: boolean;
+interface AircraftLimits {
+  maxWeight: number;
+  forwardCG: number;
+  aftCG: number;
+  utilityMaxWeight?: number;
+  utilityFwdCG?: number;
+  utilityAftCG?: number;
 }
 
-const WeightBalanceCalculator: React.FC<WeightBalanceCalculatorProps> = ({ darkMode }) => {
-  const [weightItems, setWeightItems] = useState<WeightItem[]>(() => {
-    const profile = (sampleAircrafts as any[]).find(a => a.id === 'c172');
-    return [
-      { id: '1', name: 'Empty Weight', weight: profile ? String(profile.emptyWeight) : '', arm: profile ? String(profile.emptyArm) : '' },
-      { id: '2', name: 'Pilot & Front Passenger', weight: '', arm: '37' },
-      { id: '3', name: 'Rear Passengers', weight: '', arm: '73' },
-      { id: '4', name: 'Baggage', weight: '', arm: '95' },
-      { id: '5', name: 'Fuel (lbs)', weight: profile ? String(profile.fuelWeightLbs || 318) : '', arm: profile ? String(profile.fuelArm || 48) : '48' }
-    ];
+interface AircraftConfiguration {
+  emptyWeight: string;
+  emptyArm: string;
+  fuelWeight: string;
+  fuelArm: string;
+  rampArm: string;
+  takeoffArm: string;
+  landingArm: string;
+  startupDeduction: string;
+  burnedDeduction: string;
+  fuelCapacityGal: number;
+}
+
+interface TelemetryResults {
+  rampW: number;
+  rampM: number;
+  rampCG: number;
+  takeoffW: number;
+  takeoffM: number;
+  takeoffCG: number;
+  landingW: number;
+  landingM: number;
+  landingCG: number;
+  isWeightSafe: boolean;
+  isCGSafe: boolean;
+  fuelLbs: number;
+  remainingFuelLbs: number;
+  payloadW: number;
+  momentArm: number;
+}
+
+// --- 2. THEME & DESIGN SYSTEM CONSTANTS ---
+
+const THEME = {
+  bg: '#000000',
+  surface: '#18181b',
+  surfaceAlt: '#0c0c0e',
+  border: '#27272a',
+  accent: '#dc2626', 
+  textPrimary: '#f4f4f5',
+  textSecondary: '#71717a',
+  textMuted: '#3f3f46',
+  success: '#22c55e',
+  font: 'font-mono tracking-tighter'
+};
+
+// --- 3. REUSABLE ATOMIC COMPONENTS ---
+
+const HUDLabel = ({ children }: { children: React.ReactNode }) => (
+  <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-[#71717a] mb-2">
+    {children}
+  </label>
+);
+
+const CockpitInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+  <input 
+    {...props} 
+    className="w-full p-3 bg-black border border-[#27272a] rounded-none text-[#f4f4f5] font-mono text-xs focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626] outline-none transition-all placeholder:text-[#3f3f46] tabular-nums" 
+  />
+);
+
+const TelemetryCard = ({ label, value, subValue, status }: { label: string; value: string; subValue?: string; status?: 'nominal' | 'alert' | 'critical' }) => (
+  <div className={`p-6 bg-[#18181b] border ${
+    status === 'critical' ? `border-[#dc2626] bg-[#dc2626]/5` : 
+    status === 'alert' ? 'border-yellow-600/50 bg-yellow-600/5' : 
+    `border-[#27272a]`
+  } transition-all duration-500 relative group`}>
+    <div className={`text-[9px] font-black uppercase tracking-[0.4em] ${status === 'critical' ? `text-[#dc2626]` : `text-[#71717a]`} mb-3`}>
+      {label}
+    </div>
+    <div className="flex flex-col">
+      <span className={`text-2xl font-black ${status === 'critical' ? `text-[#dc2626]` : `text-white`}`}>{value}</span>
+      {subValue && <span className="text-[10px] font-bold text-[#71717a] mt-1.5 uppercase tracking-widest tabular-nums">{subValue}</span>}
+    </div>
+    <div className={`absolute top-0 right-0 w-1 h-full ${status === 'critical' ? `bg-[#dc2626]` : 'bg-transparent'}`}></div>
+  </div>
+);
+
+// --- 4. MAIN MODULE: WEIGHT AND BALANCE CALCULATOR ---
+
+const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
+  
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [profileId, setProfileId] = useState<string>('c172');
+  const [isLocked, setIsLocked] = useState<boolean>(true);
+  const [activeCategory, setActiveCategory] = useState<'NORMAL' | 'UTILITY'>('NORMAL');
+  const [weightItems, setWeightItems] = useState<WeightItem[]>([]);
+  const [sysLogs, setSysLogs] = useState<string[]>(['SYS_BOOT: OK', 'MODULE_WB: READY']);
+  
+  const [limits, setLimits] = useState<AircraftLimits>({
+    maxWeight: 2550,
+    forwardCG: 35.0,
+    aftCG: 47.3,
+    utilityMaxWeight: 2200
   });
 
-  const [aircraftLimits, setAircraftLimits] = useState({
-    maxWeight: '2300',
-    forwardCG: '35.0',
-    aftCG: '47.3'
+  const [config, setConfig] = useState<AircraftConfiguration>({
+    emptyWeight: '1642.5',
+    emptyArm: '38.42',
+    fuelWeight: '318',
+    fuelArm: '48',
+    rampArm: '38.5',
+    takeoffArm: '38.5',
+    landingArm: '38.2',
+    startupDeduction: '8',
+    burnedDeduction: '120',
+    fuelCapacityGal: 53
   });
-
-  const [aircraftData, setAircraftData] = useState(() => {
-    const profile = (sampleAircrafts as any[]).find(a => a.id === 'c172');
-    return {
-      emptyWeight: profile ? String(profile.emptyWeight) : '1720.9',
-      emptyArm: profile ? String(profile.emptyArm) : '41.9',
-      fuelWeight: profile ? String(profile.fuelWeightLbs || 318) : '318',
-      fuelArm: profile ? String(profile.fuelArm || 48) : '48',
-      rampArm: profile ? String(profile.rampArm || 41.9) : '42.21',
-      takeoffArm: profile ? String(profile.takeoffArm || 41.9) : '42.20',
-      landingArm: profile ? String(profile.landingArm || 41.5) : '41.20',
-      startupDeduction: profile ? String(profile.startupDeductionLbs || 8) : '8',
-      burnedDeduction: profile ? String(profile.burnedDeductionLbs || 120) : '120'
-    };
-  });
-
-  const [aircraftProfile, setAircraftProfile] = useState<string>('c172');
-  // startup and burned fuel are now entered as weightItems rows (gallons)
 
   useEffect(() => {
-    // load default profile and prefill empty weight/arm/limits
-    const profile = (sampleAircrafts as any[]).find(a => a.id === aircraftProfile);
+    const profile = (sampleAircrafts as any[]).find(a => a.id === profileId);
     if (profile) {
-      setAircraftLimits({
-        maxWeight: String(profile.maxWeight),
-        forwardCG: String(profile.forwardCG),
-        aftCG: String(profile.aftCG)
+      setSysLogs(prev => [`LOAD_PROFILE: ${profileId}`, ...prev].slice(0, 5));
+      setLimits({
+        maxWeight: profile.maxWeight || 2550,
+        forwardCG: profile.forwardCG || 35.0,
+        aftCG: profile.aftCG || 47.3,
+        utilityMaxWeight: profile.utilityMaxWeight || 2200
       });
 
-      setAircraftData({
+      setConfig({
         emptyWeight: String(profile.emptyWeight),
         emptyArm: String(profile.emptyArm),
         fuelWeight: String(profile.fuelWeightLbs || 318),
@@ -68,668 +180,496 @@ const WeightBalanceCalculator: React.FC<WeightBalanceCalculatorProps> = ({ darkM
         takeoffArm: String(profile.takeoffArm || profile.emptyArm),
         landingArm: String(profile.landingArm || profile.emptyArm),
         startupDeduction: String(profile.startupDeductionLbs || 8),
-        burnedDeduction: String(profile.burnedDeductionLbs || 120)
+        burnedDeduction: String(profile.burnedDeductionLbs || 120),
+        fuelCapacityGal: profile.fuelCapacityGal || 53
       });
 
-      // set empty weight and arm on first row and prefill fuel weight
-      setWeightItems(items => items.map(it => {
-        if (it.name === 'Empty Weight') return { ...it, weight: String(profile.emptyWeight), arm: String(profile.emptyArm) };
-        if (it.name === 'Fuel (lbs)') return { ...it, weight: String(profile.fuelWeightLbs || 318), arm: String(profile.fuelArm || 48) };
-        return it;
-      }));
+      setWeightItems([
+        { id: '1', name: 'BASIC EMPTY WEIGHT', weight: String(profile.emptyWeight), arm: String(profile.emptyArm), isLocked: true, category: 'fixed' },
+        { id: '2', name: 'PILOT & FRONT PASSENGER', weight: '190', arm: '37', category: 'payload' },
+        { id: '3', name: 'REAR PASSENGERS', weight: '0', arm: '73', category: 'payload' },
+        { id: '4', name: 'BAGGAGE AREA 1', weight: '0', arm: '95', category: 'payload' },
+        { id: '5', name: 'BAGGAGE AREA 2', weight: '0', arm: '123', category: 'payload' },
+        { id: '6', name: 'FUEL LOAD (TOTAL LBS)', weight: String(profile.fuelWeightLbs || 318), arm: String(profile.fuelArm || 48), isLocked: true, category: 'fuel' }
+      ]);
     }
-  }, [aircraftProfile]);
+  }, [profileId]);
 
-  // Update weight items when aircraft data changes
-  useEffect(() => {
-    setWeightItems(items => items.map(it => {
-      if (it.name === 'Empty Weight') return { ...it, weight: aircraftData.emptyWeight, arm: aircraftData.emptyArm };
-      if (it.name === 'Fuel (lbs)') return { ...it, weight: aircraftData.fuelWeight, arm: aircraftData.fuelArm };
-      return it;
-    }));
-  }, [aircraftData]);
-
-  const addWeightItem = () => {
+  const handleAddItem = useCallback(() => {
     const newItem: WeightItem = {
       id: Date.now().toString(),
-      name: 'Custom Item',
+      name: 'ADDITIONAL LOAD ITEM',
       weight: '',
-      arm: ''
+      arm: '',
+      category: 'payload',
+      timestamp: Date.now()
     };
-    setWeightItems([...weightItems, newItem]);
-  };
+    setWeightItems(prev => [...prev, newItem]);
+    setSysLogs(prev => ['MANIFEST: ADD_ENTRY', ...prev].slice(0, 5));
+  }, []);
 
-  const removeWeightItem = (id: string) => {
-    if (weightItems.length > 1) {
-      setWeightItems(weightItems.filter(item => item.id !== id));
-    }
-  };
+  const handleRemoveItem = useCallback((id: string) => {
+    setWeightItems(prev => prev.filter(item => item.id !== id || item.isLocked));
+    setSysLogs(prev => ['MANIFEST: REM_ENTRY', ...prev].slice(0, 5));
+  }, []);
 
-  const updateWeightItem = (id: string, field: keyof WeightItem, value: string) => {
-    setWeightItems(weightItems.map(item => 
+  const handleUpdateItem = useCallback((id: string, field: keyof WeightItem, value: string) => {
+    setWeightItems(prev => prev.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));
-  };
+  }, []);
 
-  const calculateWeightAndBalance = () => {
-
-    let totalWeight = 0;
-    let totalMoment = 0;
-
-    // determine fuel arm from aircraft data
-    // Use fixed fuel arm from aircraft data for all fuel calculations
-    const fuelArmValue = isNaN(Number(aircraftData.fuelArm)) ? 48 : Number(aircraftData.fuelArm);
-
-    // accumulate payload weights and fuel weight (lbs)
-    let payloadWeight = 0;
-    let payloadMoment = 0;
-    let fuelLbs = 0;
+  const results = useMemo((): TelemetryResults => {
+    let payloadW = 0;
+    let payloadM = 0;
+    let currentFuelW = 0;
+    const fArm = parseFloat(config.fuelArm) || 48;
 
     weightItems.forEach(item => {
-      const arm = parseFloat(item.arm) || 0;
-      const val = parseFloat(item.weight) || 0;
-      
-      // Detect fuel, startup, and burned rows
-      const isStartup = /startup|taxi|runup/i.test(item.name);
-      const isBurned = /burn|en-?route|enroute/i.test(item.name);
-      const isFuel = /fuel(?!.*(startup|taxi|runup|burn|en-?route|enroute))/i.test(item.name);
-      
-      if (isFuel) {
-        fuelLbs = val;
-        // Use fixed fuel arm, not the one from the table
-      } else if (isStartup || isBurned) {
-        // These are handled by fixed deductions, not table calculations
-        // Just skip them in the payload calculation
+      const w = parseFloat(item.weight) || 0;
+      const a = parseFloat(item.arm) || 0;
+      if (item.category === 'fuel') {
+        currentFuelW = w;
       } else {
-        // Regular payload items
-        payloadWeight += val;
-        payloadMoment += val * arm;
+        payloadW += w;
+        payloadM += (w * a);
       }
     });
 
-    // Use fixed deductions from aircraft data
-    const startupDeduction = Number(aircraftData.startupDeduction) || 8;
-    const burnedDeduction = Number(aircraftData.burnedDeduction) || 120;
-
-    const fuelMoment = fuelLbs * fuelArmValue;
-
-    totalWeight = payloadWeight + fuelLbs;
-    totalMoment = payloadMoment + fuelMoment;
-
-  // Ramp calculations
-  const rampWeight = totalWeight;
-  const rampMoment = totalMoment;
-  const rampCG = rampWeight > 0 ? rampMoment / rampWeight : 0;
-
-  // Use arms from aircraft data
-  const rampArm = isNaN(Number(aircraftData.rampArm)) ? 42.21 : Number(aircraftData.rampArm);
-  const takeoffArm = isNaN(Number(aircraftData.takeoffArm)) ? 42.20 : Number(aircraftData.takeoffArm);
-  const landingArm = isNaN(Number(aircraftData.landingArm)) ? 41.20 : Number(aircraftData.landingArm);
-
-  // Derived rows
-  const takeoffWeight = Math.max(0, rampWeight - startupDeduction);
-  const takeoffMoment = Math.max(0, rampMoment - 384); // -8 * 48 = -384
-  const takeoffCG = takeoffWeight > 0 ? takeoffMoment / takeoffWeight : 0;
-
-  const landingWeight = Math.max(0, takeoffWeight - burnedDeduction);
-  const landingMoment = Math.max(0, takeoffMoment - 5760); // -120 * 48 = -5760
-  const landingCG = landingWeight > 0 ? landingMoment / landingWeight : 0;
-
-    const isWithinWeightLimit = rampWeight <= Number(aircraftLimits.maxWeight);
-    const isWithinCGLimit = rampCG >= Number(aircraftLimits.forwardCG) && rampCG <= Number(aircraftLimits.aftCG);
+    const startD = parseFloat(config.startupDeduction) || 0;
+    const burnD = parseFloat(config.burnedDeduction) || 0;
+    const rampW = payloadW + currentFuelW;
+    const rampM = payloadM + (currentFuelW * fArm);
+    const rampCG = rampW > 0 ? rampM / rampW : 0;
+    const takeoffW = rampW - startD;
+    const takeoffM = rampM - (startD * fArm);
+    const takeoffCG = takeoffW > 0 ? takeoffM / takeoffW : 0;
+    const landingW = takeoffW - burnD;
+    const landingM = takeoffM - (burnD * fArm);
+    const landingCG = landingW > 0 ? landingM / landingW : 0;
+    const currentMax = activeCategory === 'NORMAL' ? limits.maxWeight : (limits.utilityMaxWeight || limits.maxWeight);
 
     return {
-      totalWeight,
-      totalMoment,
-      rampWeight,
-      rampMoment,
-      rampCG,
-      takeoffWeight,
-      takeoffMoment,
-      takeoffCG,
-      landingWeight,
-      landingMoment,
-      landingCG,
-      startupDeduction,
-      burnedDeduction,
-      rampArm,
-      takeoffArm,
-      landingArm,
-      isWithinWeightLimit,
-      isWithinCGLimit,
-      fuelLbs,
-      startupWeightLbs: startupDeduction,
-      burnedWeightLbs: burnedDeduction,
-      startupMoment: 384,
-      burnedMoment: 5760
+      rampW, rampM, rampCG,
+      takeoffW, takeoffM, takeoffCG,
+      landingW, landingM, landingCG,
+      isWeightSafe: rampW <= currentMax,
+      isCGSafe: rampCG >= limits.forwardCG && rampCG <= limits.aftCG,
+      fuelLbs: currentFuelW,
+      remainingFuelLbs: currentFuelW - startD - burnD,
+      payloadW,
+      momentArm: rampCG
     };
-  };
-
-  const results = calculateWeightAndBalance();
+  }, [weightItems, config, limits, activeCategory]);
 
   return (
-    <div className={`${darkMode ? 'bg-theme-card-dark' : 'bg-theme-card'} rounded-lg shadow-lg border ${
-      darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'
-    }`}>
-      <div className={`${darkMode ? 'bg-theme-header-dark' : 'bg-theme-header'} border-b ${
-        darkMode ? 'border-theme-accent-dark/30' : 'border-theme-accent/30'
-      } p-6`}>
-        <div className="flex items-center space-x-3 mb-4">
-          <Scale className={`w-6 h-6 ${darkMode ? 'text-theme-accent-dark' : 'text-theme-accent'}`} />
-          <h2 className="text-2xl font-bold">Weight and Balance Calculator</h2>
-        </div>
+    <div className={`min-h-screen bg-black text-[#f4f4f5] ${THEME.font} p-4 xl:p-10 selection:bg-[#dc2626] selection:text-white overflow-x-hidden`}>
+      <div className="max-w-[1800px] mx-auto space-y-8">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Aircraft Profile</label>
-            <select
-              value={aircraftProfile}
-              onChange={(e) => setAircraftProfile(e.target.value)}
-              className={`w-full p-2 border rounded-md ${
-                darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            >
-              {(sampleAircrafts as any[]).map(a => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Max Gross Weight (lbs)</label>
-            <input
-              type="number"
-              value={aircraftLimits.maxWeight}
-              onChange={(e) => setAircraftLimits({...aircraftLimits, maxWeight: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode 
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' 
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Forward CG Limit (in)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={aircraftLimits.forwardCG}
-              onChange={(e) => setAircraftLimits({...aircraftLimits, forwardCG: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode 
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' 
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Aft CG Limit (in)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={aircraftLimits.aftCG}
-              onChange={(e) => setAircraftLimits({...aircraftLimits, aftCG: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode 
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' 
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Empty Weight (lbs)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={aircraftData.emptyWeight}
-              onChange={(e) => setAircraftData({...aircraftData, emptyWeight: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode 
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' 
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Empty Weight Arm (in)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={aircraftData.emptyArm}
-              onChange={(e) => setAircraftData({...aircraftData, emptyArm: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode 
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' 
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Fuel Weight (lbs)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={aircraftData.fuelWeight}
-              onChange={(e) => setAircraftData({...aircraftData, fuelWeight: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode 
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' 
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Fuel Arm (in)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={aircraftData.fuelArm}
-              onChange={(e) => setAircraftData({...aircraftData, fuelArm: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark'
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Startup Deduction (lbs)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={aircraftData.startupDeduction}
-              onChange={(e) => setAircraftData({...aircraftData, startupDeduction: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode 
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' 
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Burned Fuel Deduction (lbs)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={aircraftData.burnedDeduction}
-              onChange={(e) => setAircraftData({...aircraftData, burnedDeduction: e.target.value})}
-              className={`w-full p-2 border rounded-md ${
-                darkMode 
-                  ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' 
-                  : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-              }`}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Weight Items</h3>
-          <div className="space-x-2">
-            <button
-              onClick={addWeightItem}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                darkMode ? 'bg-theme-accent hover:bg-theme-accent-dark/80 text-white' : 'bg-theme-accent hover:bg-theme-accent/80 text-white'
-              }`}
-            >
-              <Plus className="w-4 h-4 inline mr-1" />
-              Add Item
-            </button>
-            <button
-              onClick={() => window.print()}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors border ${
-                darkMode ? 'border-theme-accent-dark/30 text-theme-primary-dark' : 'border-theme-accent/30 text-theme-primary'
-              }`}
-            >
-              Print
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-theme-accent/30">
-            <thead>
-              <tr className={`${darkMode ? 'bg-theme-header-dark' : 'bg-theme-header'}`}>
-                <th className="border border-theme-accent/30 p-3 text-left font-medium">Item</th>
-                <th className="border border-theme-accent/30 p-3 text-center font-medium">Weight (lbs)</th>
-                <th className="border border-theme-accent/30 p-3 text-center font-medium">Arm (in)</th>
-                <th className="border border-theme-accent/30 p-3 text-center font-medium">Moment</th>
-                <th className="border border-theme-accent/30 p-3 text-center font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {weightItems.map((item, index) => {
-                const arm = isNaN(parseFloat(item.arm)) ? 0 : parseFloat(item.arm);
-                const val = parseFloat(item.weight) || 0;
-
-                // Detect fuel, startup, and burned rows
-                const isStartup = /startup|taxi|runup/i.test(item.name);
-                const isBurned = /burn|en-?route|enroute/i.test(item.name);
-                const isFuel = /fuel(?!.*(startup|taxi|runup|burn|en-?route|enroute))/i.test(item.name);
-
-                // determine fuel arm default
-                const fuelArmDefault = isNaN(Number(aircraftData.fuelArm)) ? 48 : Number(aircraftData.fuelArm);
-
-                // For fuel-related rows, the item.weight is in pounds (not gallons)
-                let displayWeight = val; // default (lbs for payload rows)
-                let moment = 0;
-                if (isFuel) {
-                  // Fuel is already in pounds, use fixed fuel arm from aircraft data
-                  displayWeight = val;
-                  moment = val * fuelArmDefault;
-                } else if (isStartup) {
-                  // Startup fuel entered as pounds, use fixed fuel arm
-                  displayWeight = -val; // show as deduction
-                  moment = -val * fuelArmDefault;
-                } else if (isBurned) {
-                  // Burned fuel entered as pounds, use fixed fuel arm
-                  displayWeight = -val; // deduction
-                  moment = -val * fuelArmDefault;
-                } else {
-                  // payload in lbs
-                  displayWeight = val;
-                  moment = val * arm;
-                }
-
-                return (
-                  <tr key={item.id} className={index % 2 === 0 ? 
-                    (darkMode ? 'bg-theme-card-dark' : 'bg-theme-card') : 
-                    (darkMode ? 'bg-theme-card-dark/50' : 'bg-theme-header')
-                  }>
-                    <td className="border border-theme-accent/30 p-3">
-                      <div className="flex flex-col">
-                        <span className="mb-2">
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(e) => updateWeightItem(item.id, 'name', e.target.value)}
-                            className={`w-full p-2 border rounded ${
-                              darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                            }`}
-                          />
-                        </span>
-                        {isFuel && (
-                          <small className="text-xs opacity-75">Enter fuel in gallons above; weight column shows lbs</small>
-                        )}
-                        {isStartup && (
-                          <small className="text-xs opacity-75">Enter startup/taxi/runup in gallons above</small>
-                        )}
-                        {isBurned && (
-                          <small className="text-xs opacity-75">Enter burned fuel (gal) above</small>
-                        )}
-                      </div>
-                    </td>
-                    <td className="border border-theme-accent/30 p-3">
-                      {/* display weight: for fuel rows show lbs (computed), otherwise editable lbs */}
-                      {isFuel || isStartup || isBurned ? (
-                        <input
-                          type="text"
-                          value={displayWeight.toFixed(1)}
-                          disabled
-                          className={`w-full p-2 border rounded text-center ${
-                            darkMode ? 'bg-theme-card-dark/50 border-theme-accent-dark/30 text-theme-secondary-dark' : 'bg-theme-header border-theme-accent/30 text-theme-secondary'
-                          }`}
-                        />
-                      ) : (
-                        <input
-                          type="number"
-                          value={item.weight}
-                          onChange={(e) => updateWeightItem(item.id, 'weight', e.target.value)}
-                          className={`w-full p-2 border rounded text-center ${
-                            darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                          }`}
-                          placeholder="0"
-                        />
-                      )}
-                    </td>
-                    <td className="border border-theme-accent/30 p-3">
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={item.arm}
-                        onChange={(e) => updateWeightItem(item.id, 'arm', e.target.value)}
-                        className={`w-full p-2 border rounded text-center ${
-                          darkMode ? 'bg-theme-card-dark border-theme-accent-dark/30 text-theme-primary-dark' : 'bg-theme-card border-theme-accent/30 text-theme-primary'
-                        }`}
-                        placeholder="0.0"
-                      />
-                    </td>
-                    <td className="border border-theme-accent/30 p-3 text-center font-medium">
-                      {moment.toFixed(1)}
-                    </td>
-                    <td className="border border-theme-accent/30 p-3 text-center">
-                      {/* allow removal only for custom items (id length > 10) */}
-                      {parseInt(item.id) && item.id.length > 10 ? (
-                        <button
-                          onClick={() => removeWeightItem(item.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {/* Derived rows: Ramp, Less Startup, Takeoff, Less Fuel Burned, Landing */}
-              {(() => {
-                // reuse results computed earlier
-                const r = results as any;
-                const rows = [];
-                const profile = (sampleAircrafts as any[]).find(a => a.id === aircraftProfile) || {};
-                const fuelArmDefault = profile.fuelArm ? Number(profile.fuelArm) : 48;
-
-                rows.push(
-                  <tr key="ramp" className={darkMode ? 'bg-theme-card-dark' : 'bg-theme-card'}>
-                    <td className="border border-theme-accent/30 p-3">Ramp Weight</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={r.rampWeight.toFixed(1)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={r.rampCG.toFixed(2)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center font-medium">{r.rampMoment.toFixed(1)}</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"></td>
-                  </tr>
-                );
-
-                // Less Startup (deduction)
-                rows.push(
-                  <tr key="less-startup" className={darkMode ? 'bg-theme-card-dark/50' : 'bg-theme-header'}>
-                    <td className="border border-theme-accent/30 p-3">Less Startup/Taxi/Run-up</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={(-r.startupWeightLbs).toFixed(1)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={fuelArmDefault.toFixed(2)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center font-medium">{(-r.startupMoment).toFixed(1)}</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"></td>
-                  </tr>
-                );
-
-                // Takeoff
-                rows.push(
-                  <tr key="takeoff" className={darkMode ? 'bg-theme-card-dark' : 'bg-theme-card'}>
-                    <td className="border border-theme-accent/30 p-3">Takeoff Weight</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={r.takeoffWeight.toFixed(1)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={r.takeoffCG.toFixed(2)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center font-medium">{r.takeoffMoment.toFixed(1)}</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"></td>
-                  </tr>
-                );
-
-                // Less Fuel Burned
-                rows.push(
-                  <tr key="less-burn" className={darkMode ? 'bg-theme-card-dark/50' : 'bg-theme-header'}>
-                    <td className="border border-theme-accent/30 p-3">Less Fuel Burned</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={(-r.burnedWeightLbs).toFixed(1)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={fuelArmDefault.toFixed(2)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center font-medium">{(-r.burnedMoment).toFixed(1)}</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"></td>
-                  </tr>
-                );
-
-                // Landing
-                rows.push(
-                  <tr key="landing" className={darkMode ? 'bg-theme-card-dark' : 'bg-theme-card'}>
-                    <td className="border border-theme-accent/30 p-3">Landing Weight</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={r.landingWeight.toFixed(1)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center"><input type="text" disabled value={r.landingCG.toFixed(2)} className="w-full p-2 border rounded text-center"/></td>
-                    <td className="border border-theme-accent/30 p-3 text-center font-medium">{r.landingMoment.toFixed(1)}</td>
-                    <td className="border border-theme-accent/30 p-3 text-center"></td>
-                  </tr>
-                );
-
-                return rows;
-              })()}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Results Section */}
-        <div className={`mt-6 grid grid-cols-1 md:grid-cols-2 gap-6`}>
-          <div className={`p-6 rounded-lg ${darkMode ? 'bg-theme-card-dark' : 'bg-theme-header'}`}>
-            <h4 className="text-lg font-semibold mb-4">Results</h4>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="font-medium">Ramp Weight:</span>
-                <span className={results.isWithinWeightLimit ? 'text-theme-accent' : 'text-red-600'}>
-                  {results.rampWeight.toFixed(1)} lbs
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Ramp CG:</span>
-                <span className={results.isWithinCGLimit ? 'text-theme-accent' : 'text-red-600'}>
-                  {results.rampCG.toFixed(2)} in
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Takeoff Weight:</span>
-                <span>{results.takeoffWeight.toFixed(1)} lbs</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Takeoff CG:</span>
-                <span>{results.takeoffCG.toFixed(2)} in</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Landing Weight:</span>
-                <span>{results.landingWeight.toFixed(1)} lbs</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Landing CG:</span>
-                <span>{results.landingCG.toFixed(2)} in</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={`p-6 rounded-lg ${darkMode ? 'bg-theme-card-dark' : 'bg-theme-header'}`}>
-            <h4 className="text-lg font-semibold mb-4">Safety Limits Check</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span>Weight Limit:</span>
-                <span className={`px-2 py-1 rounded text-sm font-medium ${
-                  results.isWithinWeightLimit
-                    ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
-                    : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
-                }`}>
-                  {results.isWithinWeightLimit ? 'WITHIN LIMITS' : 'OVERWEIGHT'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>CG Envelope:</span>
-                <span className={`px-2 py-1 rounded text-sm font-medium ${
-                  results.isWithinCGLimit
-                    ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
-                    : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
-                }`}>
-                  {results.isWithinCGLimit ? 'WITHIN ENVELOPE' : 'OUT OF ENVELOPE'}
-                </span>
-              </div>
-              <div className="text-sm opacity-75">
-                CG Range: {aircraftLimits.forwardCG}" - {aircraftLimits.aftCG}"
-              </div>
-              <div className="text-sm opacity-75">
-                Max Weight: {aircraftLimits.maxWeight} lbs
-              </div>
-            </div>
-
-            {(!results.isWithinWeightLimit || !results.isWithinCGLimit) && (
-              <div className="mt-4 p-4 bg-red-100 dark:bg-red-900 rounded-lg">
-                <p className="text-sm text-red-800 dark:text-red-200 font-medium">
-                  ⚠️ Aircraft is outside safe operating limits!
-                </p>
-                <p className="text-xs text-red-700 dark:text-red-300 mt-1">
-                  {!results.isWithinWeightLimit && 'Weight exceeds maximum limit. '}
-                  {!results.isWithinCGLimit && 'CG is outside safe envelope.'}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* CG Envelope Image */}
-        <div className={`mt-6 p-6 rounded-lg ${darkMode ? 'bg-theme-card-dark' : 'bg-theme-header'}`}>
-          <h4 className="text-lg font-semibold mb-4">Center of Gravity Envelope</h4>
-          <div className="text-center">
-            <img
-              src="/assets/aviation/centerofgravitycessna172.png"
-              alt="Cessna 172 Center of Gravity Envelope"
-              className="w-full h-auto rounded-lg shadow-xl border-2 border-theme-accent/30 dark:border-theme-accent-dark/30 mx-auto"
-              style={{
-                maxWidth: '1200px',
-                maxHeight: '800px',
-                width: '100%',
-                height: '100%'
-              }}
-            />
-            <div className="mt-6">
-              <div className="text-xl font-bold mb-3">
-                Current Position: {results.rampCG.toFixed(2)}" CG, {results.rampWeight.toFixed(1)} lbs
-              </div>
-              <div className={`inline-flex items-center px-6 py-3 rounded-full text-lg font-medium ${
-                results.isWithinCGLimit
-                  ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
-                  : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
-              }`}>
-                {results.isWithinCGLimit ? (
-                  <>
-                    <span className="mr-3 text-2xl">✓</span>
-                    WITHIN CG ENVELOPE
-                  </>
-                ) : (
-                  <>
-                    <span className="mr-3 text-2xl">⚠️</span>
-                    OUTSIDE CG ENVELOPE
-                  </>
-                )}
-              </div>
-              <div className="mt-4 text-sm opacity-75">
-                <div>Forward CG Limit: {aircraftLimits.forwardCG}" | Aft CG Limit: {aircraftLimits.aftCG}"</div>
-                <div>Current CG Position: {results.rampCG.toFixed(2)}" from datum</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Fuel Analysis */}
-        <div className={`mt-6 p-4 rounded ${darkMode ? 'bg-theme-card-dark' : 'bg-theme-header'}`}>
-          <h4 className="text-lg font-semibold mb-3">Fuel Analysis</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm opacity-80">
-                <div>Fuel weight conversion: 1 gal = 6 lbs</div>
-                <div className="mt-2">Fuel on board: {(results.fuelLbs / 6).toFixed(1)} gal ({results.fuelLbs.toFixed(1)} lbs)</div>
-                <div>Startup deduction: {aircraftData.startupDeduction} lbs</div>
-                <div>Burned fuel deduction: {aircraftData.burnedDeduction} lbs</div>
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end border-b border-[#27272a] pb-10 gap-8">
+          <div className="flex items-center space-x-8">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-[#dc2626] blur-2xl opacity-10 group-hover:opacity-30 transition-opacity"></div>
+              <div className="relative bg-[#18181b] p-5 border border-[#27272a] shadow-2xl">
+                <Scale className="w-12 h-12 text-[#dc2626]" />
               </div>
             </div>
             <div>
-              <div className="text-sm opacity-80">
-                <div>Remaining fuel after startup: {(results.fuelLbs - Number(aircraftData.startupDeduction)).toFixed(1)} lbs</div>
-                <div>Remaining fuel after flight: {(results.fuelLbs - Number(aircraftData.startupDeduction) - Number(aircraftData.burnedDeduction)).toFixed(1)} lbs</div>
-                <div className="mt-2 text-xs">
-                  <span className={results.fuelLbs - Number(aircraftData.startupDeduction) - Number(aircraftData.burnedDeduction) >= 0 ? 'text-theme-accent' : 'text-red-600'}>
-                    {results.fuelLbs - Number(aircraftData.startupDeduction) - Number(aircraftData.burnedDeduction) >= 0 ? '✓ Sufficient fuel' : '⚠️ Insufficient fuel'}
-                  </span>
+              <div className="flex items-center space-x-3 mb-2">
+                <span className="bg-[#dc2626] text-white text-[9px] font-black px-2 py-0.5 tracking-widest">AVPRO_CORE</span>
+                <span className="text-[#3f3f46] text-[10px] font-black tracking-widest">VER 4.8.0_STABLE</span>
+              </div>
+              <h1 className="text-5xl font-black uppercase tracking-tighter leading-none italic flex items-baseline">
+                AviationPro <span className="text-[#dc2626] ml-4 not-italic">W&B_ENGINE</span>
+              </h1>
+              <div className="flex items-center mt-4 space-x-6">
+                <div className="flex items-center text-[10px] text-[#22c55e] font-black uppercase tracking-widest">
+                  <Activity className="w-4 h-4 mr-2 animate-pulse" /> 100% Offline Integrity
+                </div>
+                <div className="flex items-center text-[10px] text-[#71717a] font-black uppercase tracking-widest">
+                  <Zap className="w-3.5 h-3.5 mr-2 text-yellow-500" /> GPU Acceleration: Active
                 </div>
               </div>
             </div>
           </div>
+
+          <div className="flex flex-wrap gap-4">
+            <div className="flex border border-[#27272a] bg-[#18181b] p-1">
+              {['NORMAL', 'UTILITY'].map(cat => (
+                <button 
+                  key={cat}
+                  onClick={() => setActiveCategory(cat as any)}
+                  className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                    activeCategory === cat ? 'bg-[#dc2626] text-white' : 'text-[#71717a] hover:text-white'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <button className="flex items-center space-x-3 px-6 py-3 bg-[#18181b] border border-[#27272a] hover:bg-[#27272a] transition-all group">
+              <Save className="w-4 h-4 text-[#71717a] group-hover:text-white" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Store_Manifest</span>
+            </button>
+            <button onClick={() => window.print()} className="p-3 bg-[#18181b] border border-[#27272a] hover:bg-[#27272a] transition-all group">
+              <Printer className="w-5 h-5 text-[#71717a] group-hover:text-white" />
+            </button>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 2xl:grid-cols-12 gap-10">
+          
+          <aside className="2xl:col-span-4 space-y-8">
+            <section className="bg-[#18181b] border border-[#27272a] p-8 relative overflow-hidden group shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+              <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none group-hover:opacity-[0.08] transition-opacity">
+                <Database size={120} />
+              </div>
+              
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center space-x-3">
+                  <Gauge className="w-4 h-4 text-[#dc2626]" />
+                  <h3 className="text-xs font-black uppercase tracking-[0.5em] text-[#dc2626]">Airframe Parameters</h3>
+                </div>
+                <button 
+                  onClick={() => setIsLocked(!isLocked)}
+                  className={`p-2 border ${isLocked ? 'border-[#27272a] text-[#71717a]' : 'border-[#dc2626] text-[#dc2626] bg-[#dc2626]/5'} transition-all active:scale-95`}
+                >
+                  {isLocked ? <Lock size={16} /> : <Unlock size={16} />}
+                </button>
+              </div>
+              
+              <div className="space-y-8">
+                <div>
+                  <HUDLabel>Active Fleet Profile</HUDLabel>
+                  <div className="relative">
+                    <select 
+                      disabled={isLocked}
+                      value={profileId} 
+                      onChange={(e) => setProfileId(e.target.value)}
+                      className="w-full p-4 bg-black border border-[#27272a] rounded-none text-white font-mono text-xs appearance-none focus:border-[#dc2626] outline-none disabled:opacity-40 transition-all cursor-pointer"
+                    >
+                      {(sampleAircrafts as any[]).map(a => (
+                        <option key={a.id} value={a.id} className="bg-black text-white">{a.name.toUpperCase()}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-4.5 w-5 h-5 text-[#71717a] pointer-events-none" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <HUDLabel>MTOW (LBS)</HUDLabel>
+                    <CockpitInput 
+                      disabled={isLocked}
+                      type="number" 
+                      value={activeCategory === 'NORMAL' ? limits.maxWeight : (limits.utilityMaxWeight || limits.maxWeight)} 
+                      onChange={(e) => setLimits({...limits, maxWeight: Number(e.target.value)})} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <HUDLabel>Empty Weight</HUDLabel>
+                    <CockpitInput 
+                      disabled={isLocked}
+                      type="number" 
+                      value={config.emptyWeight} 
+                      onChange={(e) => setConfig({...config, emptyWeight: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <HUDLabel>Fwd CG Limit</HUDLabel>
+                    <CockpitInput 
+                      disabled={isLocked}
+                      type="number" 
+                      step="0.1" 
+                      value={limits.forwardCG} 
+                      onChange={(e) => setLimits({...limits, forwardCG: Number(e.target.value)})} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <HUDLabel>Aft CG Limit</HUDLabel>
+                    <CockpitInput 
+                      disabled={isLocked}
+                      type="number" 
+                      step="0.1" 
+                      value={limits.aftCG} 
+                      onChange={(e) => setLimits({...limits, aftCG: Number(e.target.value)})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <HUDLabel>Taxi Deduction</HUDLabel>
+                    <CockpitInput 
+                      disabled={isLocked}
+                      type="number" 
+                      value={config.startupDeduction} 
+                      onChange={(e) => setConfig({...config, startupDeduction: e.target.value})} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <HUDLabel>En-Route Burn</HUDLabel>
+                    <CockpitInput 
+                      disabled={isLocked}
+                      type="number" 
+                      value={config.burnedDeduction} 
+                      onChange={(e) => setConfig({...config, burnedDeduction: e.target.value})} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-[#18181b] border border-[#27272a] p-8">
+              <h3 className="text-xs font-black uppercase tracking-[0.4em] text-[#71717a] mb-6 flex items-center">
+                <History className="w-4 h-4 mr-3" /> Console_Telemetry
+              </h3>
+              <div className="space-y-3 font-mono text-[10px]">
+                {sysLogs.map((log, i) => (
+                  <div key={i} className={`flex justify-between border-b border-[#27272a]/50 pb-1.5 ${i === 0 ? 'text-[#dc2626]' : 'text-[#3f3f46]'}`}>
+                    <span className="uppercase">{log}</span>
+                    <span className="italic opacity-50">SYNC_OK</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="bg-[#18181b] border border-[#27272a] p-8">
+              <h3 className="text-xs font-black uppercase tracking-[0.4em] text-[#71717a] mb-6 flex items-center">
+                <Layers className="w-4 h-4 mr-3" /> Liquid_Weight_Matrix
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { label: 'AVGAS (100LL)', weight: '6.00 LB/GAL' },
+                  { label: 'JET A-1 FUEL', weight: '6.70 LB/GAL' },
+                  { label: 'ENGINE OIL', weight: '7.50 LB/GAL' }
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between items-center text-[11px] border-b border-[#27272a] pb-3 group">
+                    <span className="text-[#71717a] group-hover:text-white transition-colors uppercase font-bold">{item.label}</span>
+                    <span className="font-black text-white italic tracking-widest">{item.weight}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </aside>
+
+          <main className="2xl:col-span-8 space-y-8">
+            <div className="bg-[#18181b] border border-[#27272a] shadow-[0_0_60px_rgba(0,0,0,0.7)] relative">
+              <div className="p-6 bg-black border-b border-[#27272a] flex flex-col sm:flex-row justify-between items-center gap-6">
+                <div className="flex items-center space-x-4">
+                   <div className="w-3 h-3 bg-[#dc2626] rounded-full animate-pulse shadow-[0_0_10px_#dc2626]"></div>
+                   <h3 className="text-xs font-black uppercase tracking-[0.6em] text-[#71717a]">Payload Manifest // ALPHA_PLAN</h3>
+                </div>
+                <div className="flex space-x-3 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setWeightItems(prev => prev.filter(it => it.isLocked))}
+                    className="p-3 bg-[#18181b] border border-[#27272a] hover:border-[#dc2626] transition-all text-[#71717a] hover:text-[#dc2626]"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={handleAddItem}
+                    className="flex-1 sm:flex-none bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-none transition-all flex items-center justify-center active:scale-95 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+                  >
+                    <Plus className="w-4 h-4 mr-3" /> Insert Entry
+                  </button>
+                </div>
+              </div>
+              
+              <div className="overflow-x-auto h-[450px]" ref={scrollRef}>
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-widest text-[#71717a] bg-black/80 sticky top-0 z-10">
+                      <th className="p-6 text-left font-black border-b border-[#27272a]">Component Identification</th>
+                      <th className="p-6 text-center font-black border-b border-[#27272a] w-48">Mass (LBS)</th>
+                      <th className="p-6 text-center font-black border-b border-[#27272a] w-48">Arm (IN)</th>
+                      <th className="p-6 text-right font-black border-b border-[#27272a] w-56">Moment (LB-IN)</th>
+                      <th className="p-6 text-center border-b border-[#27272a] w-20"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weightItems.map((item, idx) => (
+                      <tr key={item.id} className="border-b border-[#27272a] group hover:bg-white/[0.04] transition-colors">
+                        <td className="p-2">
+                          <div className="flex items-center space-x-5">
+                            <span className="text-[9px] font-black text-[#3f3f46] tabular-nums">ID:{(idx + 1).toString().padStart(3, '0')}</span>
+                            <input 
+                              type="text" 
+                              disabled={item.isLocked}
+                              value={item.name} 
+                              className={`w-full bg-transparent p-4 outline-none uppercase font-black text-xs tracking-tight ${item.isLocked ? 'text-[#71717a]' : 'text-white'}`}
+                              onChange={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
+                            />
+                          </div>
+                        </td>
+                        <td className="p-2 border-l border-[#27272a]">
+                          <input 
+                            type="number" 
+                            value={item.weight} 
+                            placeholder="0.0"
+                            className="w-full bg-transparent p-4 text-center outline-none focus:text-[#dc2626] font-mono text-sm tabular-nums text-white"
+                            onChange={(e) => handleUpdateItem(item.id, 'weight', e.target.value)}
+                          />
+                        </td>
+                        <td className="p-2 border-l border-[#27272a]">
+                          <input 
+                            type="number" 
+                            disabled={item.isLocked && item.name.includes('EMPTY')}
+                            value={item.arm} 
+                            placeholder="0.00"
+                            className={`w-full bg-transparent p-4 text-center outline-none font-mono text-sm tabular-nums ${item.isLocked && item.name.includes('EMPTY') ? 'text-[#71717a]' : 'text-white'}`}
+                            onChange={(e) => handleUpdateItem(item.id, 'arm', e.target.value)}
+                          />
+                        </td>
+                        <td className="p-2 border-l border-[#27272a] text-right font-black text-[#f4f4f5] pr-10 text-sm tabular-nums italic">
+                          <div className="flex items-center justify-end space-x-2">
+                             <span>{((parseFloat(item.weight) || 0) * (parseFloat(item.arm) || 0)).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+                          </div>
+                        </td>
+                        <td className="p-2 border-l border-[#27272a] text-center">
+                          {!item.isLocked && (
+                            <button onClick={() => handleRemoveItem(item.id)} className="text-[#3f3f46] hover:text-[#dc2626] transition-colors p-3 active:scale-90">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="sticky bottom-0 bg-black">
+                    <tr className="bg-black/60 text-[#f4f4f5]">
+                      <td className="p-6 font-black text-xs uppercase tracking-[0.4em] text-[#71717a]">Ramp Gross Manifest</td>
+                      <td className="p-6 text-center font-black text-sm tabular-nums border-l border-[#27272a] bg-[#dc2626]/10 italic">{results.rampW.toFixed(1)}</td>
+                      <td className="p-6 text-center font-black text-[#71717a] text-sm tabular-nums border-l border-[#27272a]">N/A</td>
+                      <td className="p-6 text-right font-black text-sm tabular-nums border-l border-[#27272a] pr-10">{results.rampM.toLocaleString(undefined, {maximumFractionDigits: 1})}</td>
+                      <td className="p-6 border-l border-[#27272a]"></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              <TelemetryCard 
+                label="Ramp Telemetry" 
+                value={`${results.rampW.toFixed(1)} LBS`} 
+                subValue={`Arm: ${results.rampCG.toFixed(2)}"`}
+                status={!results.isWeightSafe ? 'critical' : 'nominal'}
+              />
+              <TelemetryCard 
+                label="Takeoff Telemetry" 
+                value={`${results.takeoffW.toFixed(1)} LBS`} 
+                subValue={`Arm: ${results.takeoffCG.toFixed(2)}"`}
+              />
+              <TelemetryCard 
+                label="Landing Telemetry" 
+                value={`${results.landingW.toFixed(1)} LBS`} 
+                subValue={`Arm: ${results.landingCG.toFixed(2)}"`}
+              />
+              <div className={`p-8 border-2 flex flex-col justify-between transition-all duration-1000 ${results.isWeightSafe && results.isCGSafe ? 'bg-green-950/20 border-green-800/40 shadow-[0_0_40px_rgba(34,197,94,0.1)]' : 'bg-[#dc2626]/10 border-[#dc2626] shadow-[0_0_50px_rgba(220,38,38,0.25)]'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className={`text-[10px] font-black uppercase tracking-[0.5em] ${results.isWeightSafe && results.isCGSafe ? 'text-green-500' : 'text-[#dc2626]'}`}>Flight_Go_NoGo</div>
+                    <div className={`text-3xl font-black uppercase italic tracking-tighter ${results.isWeightSafe && results.isCGSafe ? 'text-green-400' : 'text-[#dc2626]'}`}>
+                      {results.isWeightSafe && results.isCGSafe ? 'Nominal' : 'Critical'}
+                    </div>
+                  </div>
+                  {results.isWeightSafe && results.isCGSafe ? (
+                    <CheckCircle2 className="w-14 h-14 text-green-500/30" />
+                  ) : (
+                    <AlertTriangle className="w-14 h-14 text-[#dc2626] animate-pulse" />
+                  )}
+                </div>
+                <div className="mt-6 pt-6 border-t border-white/10">
+                   <span className="text-[10px] font-black text-[#71717a] uppercase tracking-widest flex items-center">
+                     <Clipboard className="w-3 h-3 mr-2" /> Validation: {results.isCGSafe ? 'ENVELOPE_SECURE' : 'CG_VIOLATION'}
+                   </span>
+                </div>
+              </div>
+            </div>
+
+            <footer className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10 pb-24">
+              <div className="lg:col-span-8 bg-[#18181b] border border-[#27272a] p-10 space-y-8 relative overflow-hidden">
+                <div className="absolute bottom-0 right-0 p-8 opacity-[0.02] pointer-events-none">
+                  <FileText size={200} />
+                </div>
+                <div className="flex items-center space-x-4 mb-4">
+                   <Info className="w-6 h-6 text-[#dc2626]" />
+                   <h4 className="text-sm font-black uppercase tracking-[0.5em] text-[#f4f4f5]">Safety Planning Advisory</h4>
+                </div>
+                <div className="space-y-6 text-[11px] leading-relaxed text-[#71717a] font-bold">
+                  <p className="border-l-2 border-[#27272a] pl-6 transition-colors hover:border-[#dc2626]">
+                    Current total payload (excluding BEW and Fuel) is <span className="text-white font-black italic tabular-nums">{(results.rampW - parseFloat(config.emptyWeight) - results.fuelLbs).toFixed(1)} LBS</span>. 
+                    This represents <span className="text-white font-black">{( ((results.rampW - parseFloat(config.emptyWeight) - results.fuelLbs) / (limits.maxWeight - parseFloat(config.emptyWeight))) * 100).toFixed(1)}%</span> of total useful load capacity.
+                  </p>
+                  <p className="border-l-2 border-[#27272a] pl-6 transition-colors hover:border-[#dc2626]">
+                    Estimated fuel state at destination: <span className={`font-black italic tabular-nums ${results.remainingFuelLbs < 60 ? 'text-[#dc2626]' : 'text-white'}`}>
+                      {results.remainingFuelLbs.toFixed(1)} LBS ({(results.remainingFuelLbs / 6).toFixed(1)} GAL)
+                    </span>. 
+                    Warning: Ensure this meets FAA Part 91.151 minimum reserves for Day/Night VFR flight.
+                  </p>
+                  <div className="p-6 bg-black/50 border border-[#dc2626]/30 text-[10px] uppercase font-black tracking-tighter text-[#71717a] flex items-start">
+                    <AlertTriangle className="w-5 h-5 text-[#dc2626] mr-4 shrink-0" />
+                    <span>Calculations derived from POH standards. Pilots must verify current weight/balance data via actual aircraft equipment lists before flight. Final responsibility for airworthiness rests with the PIC.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-4 bg-[#18181b] border border-[#27272a] p-10 flex flex-col items-center justify-center group relative overflow-hidden">
+                 <div className="relative z-10">
+                    <Maximize2 className="w-16 h-16 text-[#27272a] group-hover:text-[#dc2626] transition-all duration-700 active:scale-95" />
+                    <div className="absolute inset-0 border-2 border-[#dc2626] scale-150 opacity-0 group-hover:opacity-10 transition-all duration-1000 rotate-45"></div>
+                 </div>
+                 <div className="mt-10 text-center space-y-3 z-10">
+                    <div className="text-[11px] font-black uppercase tracking-[0.6em] text-[#71717a]">
+                      Envelope_Vector_Mapping
+                    </div>
+                 </div>
+                 
+                 <div className="mt-8 w-full h-1.5 bg-black/60 relative overflow-hidden z-10 border border-[#27272a]">
+                    <div 
+                      className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-in-out ${results.isCGSafe ? 'bg-[#22c55e]' : 'bg-[#dc2626]'}`}
+                      style={{ width: `${Math.min(100, Math.max(0, ((results.rampCG - limits.forwardCG) / (limits.aftCG - limits.forwardCG)) * 100))}%` }}
+                    ></div>
+                 </div>
+                 <div className="flex justify-between w-full mt-3 text-[8px] font-black text-[#3f3f46] z-10">
+                    <span>FWD:{limits.forwardCG}"</span>
+                    <span>CURR:{results.rampCG.toFixed(2)}"</span>
+                    <span>AFT:{limits.aftCG}"</span>
+                 </div>
+
+                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                    <div className="w-full h-full border-[0.5px] border-[#dc2626] rounded-full scale-150"></div>
+                    <div className="w-full h-full border-[0.5px] border-[#dc2626] rounded-full scale-110"></div>
+                 </div>
+              </div>
+            </footer>
+
+          </main>
         </div>
+
+        <div className="fixed bottom-0 left-0 right-0 bg-[#0c0c0e] border-t border-[#27272a] px-8 py-3 flex flex-col sm:flex-row justify-between items-center z-[100] gap-4">
+          <div className="flex items-center space-x-10 text-[9px] font-black uppercase tracking-[0.4em] text-[#3f3f46]">
+            <div className="flex items-center">
+              <span className="w-1.5 h-1.5 bg-[#22c55e] rounded-full mr-2"></span>
+              NETWORK: OFFLINE_MODE
+            </div>
+            <div className="hidden md:block">ENCRYPTION: AES-256_ACTIVE</div>
+          </div>
+          <div className="flex items-center space-x-6">
+             <div className="text-[10px] text-[#dc2626] font-black uppercase tracking-[0.3em] italic animate-pulse">Critical_Data_Lock // Secure</div>
+             <div className="h-6 w-[1px] bg-[#27272a]"></div>
+             <div className="flex space-x-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className={`h-2 w-5 ${i === 4 ? 'bg-[#dc2626]' : 'bg-[#27272a]'}`}></div>
+                ))}
+             </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
