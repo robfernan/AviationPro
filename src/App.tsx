@@ -6,7 +6,6 @@ import CX6Calculator from './components/CX6Calculator';
 import WeatherCalculator from './components/WeatherCalculator';
 import FlightLogs from './components/FlightLogs';
 import AircraftProfileManager from './components/AircraftProfileManager';
-import Checklists from './components/Checklists';
 import ToolsHub from './components/ToolsHub';
 
 const runtime = (window as any).runtime;
@@ -68,10 +67,7 @@ const App: React.FC = () => {
         {activeTab === 'LOGS' && <FlightLogs darkMode={true} />}
         {activeTab === 'HANGAR' && <AircraftProfileManager darkMode={true} />}
         {activeTab === 'TOOLS' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <ToolsHub darkMode={true} />
-            <Checklists darkMode={true} />
-          </div>
+          <ToolsHub darkMode={true} />
         )}
 
       </main>

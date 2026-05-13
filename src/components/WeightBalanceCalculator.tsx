@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { 
-  Scale, 
   Plus, 
   // Minus removed to clear TS:6133 warning
   Printer, 
@@ -8,9 +7,7 @@ import {
   CheckCircle2, 
   Info, 
   Database, 
-  Maximize2,
   ChevronDown,
-  Activity,
   Trash2,
   Lock,
   Unlock,
@@ -19,7 +16,6 @@ import {
   Clipboard,
   History,
   Layers,
-  Zap,
   Gauge
 } from 'lucide-react';
 import sampleAircrafts from '../data/sampleAircrafts.json';
@@ -266,34 +262,7 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
     <div className={`min-h-screen bg-black text-[#f4f4f5] ${THEME.font} p-4 xl:p-10 selection:bg-[#dc2626] selection:text-white overflow-x-hidden`}>
       <div className="max-w-[1800px] mx-auto space-y-8">
         
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end border-b border-[#27272a] pb-10 gap-8">
-          <div className="flex items-center space-x-8">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-[#dc2626] blur-2xl opacity-10 group-hover:opacity-30 transition-opacity"></div>
-              <div className="relative bg-[#18181b] p-5 border border-[#27272a] shadow-2xl">
-                <Scale className="w-12 h-12 text-[#dc2626]" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center space-x-3 mb-2">
-                <span className="bg-[#dc2626] text-white text-[9px] font-black px-2 py-0.5 tracking-widest">AVPRO_CORE</span>
-                <span className="text-[#3f3f46] text-[10px] font-black tracking-widest">VER 4.8.0_STABLE</span>
-              </div>
-              <h1 className="text-5xl font-black uppercase tracking-tighter leading-none italic flex items-baseline">
-                AviationPro <span className="text-[#dc2626] ml-4 not-italic">W&B_ENGINE</span>
-              </h1>
-              <div className="flex items-center mt-4 space-x-6">
-                <div className="flex items-center text-[10px] text-[#22c55e] font-black uppercase tracking-widest">
-                  <Activity className="w-4 h-4 mr-2 animate-pulse" /> 100% Offline Integrity
-                </div>
-                <div className="flex items-center text-[10px] text-[#71717a] font-black uppercase tracking-widest">
-                  <Zap className="w-3.5 h-3.5 mr-2 text-yellow-500" /> GPU Acceleration: Active
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-4">
             <div className="flex border border-[#27272a] bg-[#18181b] p-1">
               {['NORMAL', 'UTILITY'].map(cat => (
                 <button 
@@ -315,7 +284,6 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
               <Printer className="w-5 h-5 text-[#71717a] group-hover:text-white" />
             </button>
           </div>
-        </header>
 
         <div className="grid grid-cols-1 2xl:grid-cols-12 gap-10">
           
@@ -472,7 +440,7 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
                   </button>
                   <button 
                     onClick={handleAddItem}
-                    className="flex-1 sm:flex-none bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-none transition-all flex items-center justify-center active:scale-95 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+                    className="flex-1 sm:flex-none bg-[#dc2626] hover:bg-[#b91c1c] text-white px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-none transition-all flex items-center justify-center active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
                   >
                     <Plus className="w-4 h-4 mr-3" /> Insert Entry
                   </button>
@@ -618,17 +586,8 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
                 </div>
               </div>
 
+              {/* CG Envelope Vector Mapping - simplified */}
               <div className="lg:col-span-4 bg-[#18181b] border border-[#27272a] p-10 flex flex-col items-center justify-center group relative overflow-hidden">
-                 <div className="relative z-10">
-                    <Maximize2 className="w-16 h-16 text-[#27272a] group-hover:text-[#dc2626] transition-all duration-700 active:scale-95" />
-                    <div className="absolute inset-0 border-2 border-[#dc2626] scale-150 opacity-0 group-hover:opacity-10 transition-all duration-1000 rotate-45"></div>
-                 </div>
-                 <div className="mt-10 text-center space-y-3 z-10">
-                    <div className="text-[11px] font-black uppercase tracking-[0.6em] text-[#71717a]">
-                      Envelope_Vector_Mapping
-                    </div>
-                 </div>
-                 
                  <div className="mt-8 w-full h-1.5 bg-black/60 relative overflow-hidden z-10 border border-[#27272a]">
                     <div 
                       className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-in-out ${results.isCGSafe ? 'bg-[#22c55e]' : 'bg-[#dc2626]'}`}
@@ -639,11 +598,6 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
                     <span>FWD:{limits.forwardCG}"</span>
                     <span>CURR:{results.rampCG.toFixed(2)}"</span>
                     <span>AFT:{limits.aftCG}"</span>
-                 </div>
-
-                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-                    <div className="w-full h-full border-[0.5px] border-[#dc2626] rounded-full scale-150"></div>
-                    <div className="w-full h-full border-[0.5px] border-[#dc2626] rounded-full scale-110"></div>
                  </div>
               </div>
             </footer>

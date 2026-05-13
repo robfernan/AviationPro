@@ -110,35 +110,31 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
     doc.save(`Briefing_${fromAirport || 'UNKNOWN'}_${toAirport || 'UNKNOWN'}_${briefingData.date}.pdf`);
   };
 
-  const inputClass = darkMode
-    ? 'bg-white text-black border border-gray-300 rounded px-3 py-2 w-full'
-    : 'bg-white text-black border border-gray-300 rounded px-3 py-2 w-full';
+  const inputClass = 'bg-black text-white border border-zinc-800 rounded px-3 py-2 w-full';
 
-  const textareaClass = darkMode
-    ? 'bg-white text-black border border-gray-300 rounded px-3 py-2 w-full resize-none'
-    : 'bg-white text-black border border-gray-300 rounded px-3 py-2 w-full resize-none';
+  const textareaClass = 'bg-black text-white border border-zinc-800 rounded px-3 py-2 w-full resize-none';
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 rounded-lg border border-zinc-800 bg-black shadow-2xl">
       <div className="flex items-center gap-3 mb-6">
-        <FileText className={darkMode ? 'text-slate-200' : 'text-gray-800'} size={32} />
-        <h1 className={`text-3xl font-bold ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>
+        <FileText className="text-red-500" size={32} />
+        <h1 className="text-3xl font-bold text-white">
           Flight Briefing Builder
         </h1>
       </div>
 
-      <div className={`p-4 rounded ${darkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
-        <p className={darkMode ? 'text-slate-300' : 'text-gray-700'}>
+      <div className="p-4 rounded bg-zinc-900">
+        <p className="text-zinc-300">
           Generate a complete preflight briefing PDF with flight plan, weather, fuel planning, and weight & balance information.
         </p>
       </div>
 
       {/* Flight Info */}
-      <div className={`p-4 rounded border ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-white'}`}>
-        <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>Flight Information</h2>
+      <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
+        <h2 className="text-xl font-semibold mb-4 text-white">Flight Information</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Date
             </label>
             <input
@@ -149,7 +145,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Pilot Name
             </label>
             <input
@@ -161,7 +157,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               From (ICAO)
             </label>
             <div className="flex gap-2">
@@ -177,10 +173,8 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
                 disabled={loading || !briefingData.departureAirport}
                 className={`px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap ${
                   loading || !briefingData.departureAirport
-                    ? 'bg-gray-400 text-white cursor-not-allowed'
-                    : darkMode
-                    ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
-                    : 'bg-theme-accent text-white hover:bg-theme-accent/80'
+                    ? 'bg-zinc-700 text-zinc-300 cursor-not-allowed'
+                    : 'bg-red-700 text-white hover:bg-red-800'
                 }`}
               >
                 {loading && <Loader2 size={18} className="animate-spin" />}
@@ -189,7 +183,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             </div>
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               To (ICAO)
             </label>
             <input
@@ -201,7 +195,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Aircraft Type
             </label>
             <input
@@ -213,7 +207,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               N-Number
             </label>
             <input
@@ -228,19 +222,19 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
       </div>
 
       {/* Weather */}
-      <div className={`p-4 rounded border ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-white'}`}>
-        <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>Weather & NOTAMs</h2>
+      <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
+        <h2 className="text-xl font-semibold mb-4 text-white">Weather & NOTAMs</h2>
 
         {weatherError && (
-          <div className={`mb-4 p-3 rounded flex gap-2 ${darkMode ? 'bg-red-900/30 border border-red-700' : 'bg-red-50 border border-red-300'}`}>
-            <AlertCircle size={20} className={darkMode ? 'text-red-400' : 'text-red-600'} />
-            <p className={darkMode ? 'text-red-300' : 'text-red-700'}>{weatherError}</p>
+          <div className="mb-4 p-3 rounded flex gap-2 bg-zinc-950 border border-red-700">
+            <AlertCircle size={20} className="text-red-500" />
+            <p className="text-red-300">{weatherError}</p>
           </div>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               METAR
             </label>
             <textarea
@@ -251,13 +245,13 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
               rows={3}
             />
             {briefingData.metar && (
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+              <p className="text-xs mt-1 text-zinc-500">
                 Raw METAR observation
               </p>
             )}
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               TAF
             </label>
             <textarea
@@ -268,13 +262,13 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
               rows={3}
             />
             {briefingData.taf && (
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+              <p className="text-xs mt-1 text-zinc-500">
                 Terminal Aerodrome Forecast (valid 24-30 hours)
               </p>
             )}
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               NOTAMs (one per line)
             </label>
             <textarea
@@ -289,11 +283,11 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
       </div>
 
       {/* Fuel Plan */}
-      <div className={`p-4 rounded border ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-white'}`}>
-        <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>Fuel Plan</h2>
+      <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
+        <h2 className="text-xl font-semibold mb-4 text-white">Fuel Plan</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Total Distance (nm)
             </label>
             <input
@@ -307,7 +301,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Total Time (hours)
             </label>
             <input
@@ -321,7 +315,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Fuel Burned (gallons)
             </label>
             <input
@@ -335,7 +329,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Reserve (45 min, gallons)
             </label>
             <input
@@ -352,11 +346,11 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
       </div>
 
       {/* Weight & Balance */}
-      <div className={`p-4 rounded border ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-white'}`}>
-        <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>Weight & Balance</h2>
+      <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
+        <h2 className="text-xl font-semibold mb-4 text-white">Weight & Balance</h2>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Ramp Weight (lbs)
             </label>
             <input
@@ -370,7 +364,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               Takeoff Weight (lbs)
             </label>
             <input
@@ -384,7 +378,7 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-zinc-300">
               CG (inches)
             </label>
             <input
@@ -404,22 +398,14 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
       <div className="flex gap-4">
         <button
           onClick={handleGeneratePDF}
-          className={`flex items-center gap-2 px-6 py-3 rounded font-semibold transition ${
-            darkMode
-              ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
-              : 'bg-theme-accent text-white hover:bg-theme-accent/80'
-          }`}
+          className="flex items-center gap-2 px-6 py-3 rounded font-semibold transition bg-red-700 text-white hover:bg-red-800"
         >
           <Download size={20} />
           Generate & Download PDF
         </button>
         <button
           onClick={() => window.print()}
-          className={`flex items-center gap-2 px-6 py-3 rounded font-semibold transition ${
-            darkMode
-              ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-              : 'bg-gray-300 text-gray-900 hover:bg-gray-400'
-          }`}
+          className="flex items-center gap-2 px-6 py-3 rounded font-semibold transition bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
         >
           Print
         </button>

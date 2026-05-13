@@ -60,11 +60,11 @@ const AircraftProfileManager: React.FC<AircraftProfileManagerProps> = ({ darkMod
   };
 
   if (loading) {
-    return <div className="p-6 text-zinc-100">Loading aircraft profiles...</div>;
+    return <div className={`p-6 ${darkMode ? 'text-zinc-100' : 'text-zinc-100'}`}>Loading aircraft profiles...</div>;
   }
 
   return (
-    <div className="flex flex-col h-full border border-zinc-800 bg-black shadow-2xl overflow-hidden">
+    <div className={`flex flex-col h-full border border-zinc-800 bg-black shadow-2xl overflow-hidden ${darkMode ? '' : ''}`}>
       <div className="flex items-center gap-3 mb-6 p-6 border-b border-zinc-800 bg-zinc-900">
         <Plane className="text-red-500" size={32} />
         <h1 className="text-3xl font-bold text-white">Aircraft Profiles</h1>
@@ -77,11 +77,7 @@ const AircraftProfileManager: React.FC<AircraftProfileManagerProps> = ({ darkMod
           </p>
           <button
             onClick={loadSampleAircrafts}
-            className={`px-6 py-3 rounded font-semibold transition ${
-              darkMode
-                ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
-                : 'bg-theme-accent text-white hover:bg-theme-accent/80'
-            }`}
+            className="px-6 py-3 rounded font-semibold transition bg-red-700 text-white hover:bg-red-800"
           >
             Load Sample Aircraft
           </button>

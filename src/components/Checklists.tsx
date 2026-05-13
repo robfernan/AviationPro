@@ -181,33 +181,29 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
     });
   };
 
-  const inputClass = 'bg-white text-black border border-gray-300 rounded px-3 py-2 w-full';
+  const inputClass = 'bg-black text-white border border-zinc-800 rounded px-3 py-2 w-full';
 
   if (loading) {
-    return <div className={`p-6 ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>Loading checklists...</div>;
+    return <div className="p-6 text-zinc-100">Loading checklists...</div>;
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 rounded-lg border border-zinc-800 bg-black shadow-2xl">
       <div className="flex items-center gap-3 mb-6">
-        <CheckSquare2 className={darkMode ? 'text-slate-200' : 'text-gray-800'} size={32} />
-        <h1 className={`text-3xl font-bold ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>
+        <CheckSquare2 className="text-red-500" size={32} />
+        <h1 className="text-3xl font-bold text-white">
           Checklists
         </h1>
       </div>
 
       {checklists.length === 0 ? (
-        <div className={`p-6 rounded text-center ${darkMode ? 'bg-slate-800' : 'bg-gray-100'}`}>
-          <p className={darkMode ? 'text-slate-300 mb-4' : 'text-gray-700 mb-4'}>
+        <div className="p-6 rounded text-center bg-zinc-900">
+          <p className="text-zinc-300 mb-4">
             No checklists yet. Create some default checklists to get started.
           </p>
           <button
             onClick={createDefaultChecklists}
-            className={`px-6 py-3 rounded font-semibold transition ${
-              darkMode
-                ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
-                : 'bg-theme-accent text-white hover:bg-theme-accent/80'
-            }`}
+            className="px-6 py-3 rounded font-semibold transition bg-red-700 text-white hover:bg-red-800"
           >
             Create Default Checklists
           </button>
@@ -215,8 +211,8 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Checklist List */}
-          <div className={`p-4 rounded border ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-white'}`}>
-            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>
+          <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
+            <h2 className="text-lg font-semibold mb-4 text-white">
               My Checklists
             </h2>
 
@@ -230,16 +226,12 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
                   }}
                   className={`w-full text-left px-4 py-3 rounded transition ${
                     selectedChecklistId === checklist.id
-                      ? darkMode
-                        ? 'bg-theme-accent-dark text-white'
-                        : 'bg-theme-accent text-white'
-                      : darkMode
-                      ? 'bg-slate-800 text-slate-200 hover:bg-slate-700'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                      ? 'bg-red-700 text-white'
+                      : 'bg-black text-zinc-300 hover:bg-zinc-800'
                   }`}
                 >
                   <div className="font-medium">{checklist.name}</div>
-                  <div className={`text-sm ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                  <div className="text-sm text-zinc-500">
                     {checklist.items.filter(i => i.completed).length}/{checklist.items.length} done
                   </div>
                 </button>
@@ -247,7 +239,7 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
             </div>
 
             {/* New Checklist Form */}
-            <div className={`p-4 rounded border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-300 bg-gray-50'}`}>
+            <div className="p-4 rounded border border-zinc-800 bg-black">
               <div className="space-y-2">
                 <input
                   type="text"
@@ -269,11 +261,7 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
                 </select>
                 <button
                   onClick={handleCreateNewChecklist}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition ${
-                    darkMode
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-green-500 text-white hover:bg-green-600'
-                  }`}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition bg-red-700 text-white hover:bg-red-800"
                 >
                   <Plus size={18} />
                   Create
@@ -284,34 +272,26 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
 
           {/* Checklist Editor */}
           {editingChecklist && (
-            <div className={`lg:col-span-3 p-4 rounded border ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-white'}`}>
+            <div className="lg:col-span-3 p-4 rounded border border-zinc-800 bg-zinc-900">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className={`text-2xl font-bold ${darkMode ? 'text-slate-200' : 'text-gray-900'}`}>
+                  <h2 className="text-2xl font-bold text-white">
                     {editingChecklist.name}
                   </h2>
-                  <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                  <p className="text-sm text-zinc-400">
                     {editingChecklist.type.charAt(0).toUpperCase() + editingChecklist.type.slice(1)} Checklist
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleDuplicateChecklist}
-                    className={`flex items-center gap-2 px-4 py-2 rounded font-medium transition ${
-                      darkMode
-                        ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-                        : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                    }`}
+                    className="flex items-center gap-2 px-4 py-2 rounded font-medium transition bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
                   >
                     <Copy size={18} />
                   </button>
                   <button
                     onClick={() => handleDeleteChecklist(editingChecklist.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded font-medium transition ${
-                      darkMode
-                        ? 'bg-red-600 text-white hover:bg-red-700'
-                        : 'bg-red-500 text-white hover:bg-red-600'
-                    }`}
+                    className="flex items-center gap-2 px-4 py-2 rounded font-medium transition bg-red-700 text-white hover:bg-red-800"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -323,7 +303,7 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
                 {editingChecklist.items.map((item) => (
                   <div
                     key={item.id}
-                    className={`p-4 rounded border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50'}`}
+                    className="p-4 rounded border border-zinc-800 bg-black"
                   >
                     <div className="flex items-start gap-3">
                       <input
@@ -350,11 +330,7 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
                       </div>
                       <button
                         onClick={() => handleRemoveItem(item.id)}
-                        className={`p-2 rounded transition ${
-                          darkMode
-                            ? 'text-red-400 hover:bg-red-600 hover:text-white'
-                            : 'text-red-500 hover:bg-red-100'
-                        }`}
+                        className="p-2 rounded transition text-red-500 hover:bg-red-700 hover:text-white"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -366,11 +342,7 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
               {/* Add Item Button */}
               <button
                 onClick={handleAddItem}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded font-medium transition mb-6 ${
-                  darkMode
-                    ? 'bg-slate-800 text-slate-200 hover:bg-slate-700'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                }`}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded font-medium transition mb-6 bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
               >
                 <Plus size={20} />
                 Add Item
@@ -379,24 +351,20 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
               {/* Save Button */}
               <button
                 onClick={handleSaveChecklist}
-                className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded font-semibold transition ${
-                  darkMode
-                    ? 'bg-theme-accent-dark text-white hover:bg-theme-accent-dark/80'
-                    : 'bg-theme-accent text-white hover:bg-theme-accent/80'
-                }`}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded font-semibold transition bg-red-700 text-white hover:bg-red-800"
               >
                 <Save size={20} />
                 Save Checklist
               </button>
 
               {/* Progress */}
-              <div className="mt-6 pt-6 border-t border-slate-700">
-                <div className={`mb-2 text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              <div className="mt-6 pt-6 border-t border-zinc-800">
+                <div className="mb-2 text-sm font-medium text-zinc-300">
                   Progress: {editingChecklist.items.filter(i => i.completed).length}/{editingChecklist.items.length}
                 </div>
-                <div className={`w-full h-2 rounded ${darkMode ? 'bg-slate-700' : 'bg-gray-200'}`}>
+                <div className="w-full h-2 rounded bg-zinc-800">
                   <div
-                    className={`h-2 rounded transition-all ${darkMode ? 'bg-theme-accent-dark' : 'bg-theme-accent'}`}
+                    className="h-2 rounded transition-all bg-red-700"
                     style={{
                       width: editingChecklist.items.length > 0
                         ? `${(editingChecklist.items.filter(i => i.completed).length / editingChecklist.items.length) * 100}%`
