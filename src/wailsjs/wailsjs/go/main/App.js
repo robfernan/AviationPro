@@ -6,6 +6,10 @@ export function GetWeather(arg1) {
   return window['go']['main']['App']['GetWeather'](arg1);
 }
 
+export function GetWeatherBundle(arg1) {
+  return window['go']['main']['App']['GetWeatherBundle'](arg1);
+}
+
 export function Shutdown(arg1) {
   return window['go']['main']['App']['Shutdown'](arg1);
 }

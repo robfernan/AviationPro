@@ -41,8 +41,15 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
 /**
  * Fetch METAR data from NOAA Aviation Weather Center
- * Uses the free API at api.aviationweather.gov
+ * Uses the free API through the local dev proxy or Wails desktop bridge.
  */
+
+const WEATHER_PROXY_BASE = '/aviationweather';
+
+const getWeatherUrl = (path: string, icaoCode: string) => {
+  const code = icaoCode.toUpperCase();
+  return `${WEATHER_PROXY_BASE}/api/data/${path}?ids=${code}&format=json`;
+};
 export async function fetchMETAR(icaoCode: string): Promise<METARData | null> {
   const cacheKey = `metar-${icaoCode.toUpperCase()}`;
   const cached = weatherCache.get(cacheKey);
@@ -52,9 +59,7 @@ export async function fetchMETAR(icaoCode: string): Promise<METARData | null> {
   }
 
   try {
-    const response = await fetch(
-      `https://api.aviationweather.gov/data/metar?ids=${icaoCode.toUpperCase()}&format=json`
-    );
+    const response = await fetch(getWeatherUrl('metar', icaoCode));
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -65,9 +70,6 @@ export async function fetchMETAR(icaoCode: string): Promise<METARData | null> {
     // NOAA returns array, take first result
     if (data && Array.isArray(data) && data.length > 0) {
       const metarData = data[0];
-
-      // Parse the METAR string to extract key information
-      const parsed = parseMETAR(metarData.rawOb);
 
       const result: METARData = {
         icao: icaoCode.toUpperCase(),
@@ -116,9 +118,7 @@ export async function fetchTAF(icaoCode: string): Promise<TAFData | null> {
   }
 
   try {
-    const response = await fetch(
-      `https://api.aviationweather.gov/data/taf?ids=${icaoCode.toUpperCase()}&format=json`
-    );
+    const response = await fetch(getWeatherUrl('taf', icaoCode));
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -172,31 +172,6 @@ export async function fetchAirportWeather(icaoCode: string): Promise<WeatherResp
       error: `Failed to fetch weather: ${error instanceof Error ? error.message : 'Unknown error'}`,
     };
   }
-}
-
-/**
- * Simple METAR parser to extract basic information
- * This is a simplified version; a full parser would handle all METAR codes
- */
-function parseMETAR(metarString: string): {
-  ceiling?: number;
-  visibility?: number;
-} {
-  const result: { ceiling?: number; visibility?: number } = {};
-
-  // Look for ceiling height (e.g., "BKN025" = broken clouds at 2500ft)
-  const ceilingMatch = metarString.match(/(OVC|BKN)(\d{3})/);
-  if (ceilingMatch) {
-    result.ceiling = parseInt(ceilingMatch[2]) * 100; // Convert to feet
-  }
-
-  // Look for visibility (e.g., "10SM" = 10 statute miles)
-  const visMatch = metarString.match(/(\d+)SM/);
-  if (visMatch) {
-    result.visibility = parseInt(visMatch[1]);
-  }
-
-  return result;
 }
 
 /**

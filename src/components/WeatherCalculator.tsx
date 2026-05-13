@@ -1,16 +1,50 @@
 import { useState } from 'react';
-import { Cloud, Thermometer, Gauge, CloudRain } from 'lucide-react';
+import { AlertCircle, Cloud, CloudRain, Gauge, Loader2, Thermometer } from 'lucide-react';
 import React from 'react';
+import { fetchAirportWeather } from '../utils/weatherService';
 interface WeatherCalculatorProps {
   darkMode: boolean;
 }
 
 const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
+  const [icaoCode, setIcaoCode] = useState<string>('');
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [metar, setMetar] = useState<string>('');
+  const [taf, setTaf] = useState<string>('');
   const [airportElevation, setAirportElevation] = useState<string>('');
   const [temperature, setTemperature] = useState<string>('');
   const [altimeterSetting, setAltimeterSetting] = useState<string>('29.92');
   const [dewPoint, setDewPoint] = useState<string>('');
   const [activeTool, setActiveTool] = useState<'density' | 'cloudbase'>('density');
+
+  const fetchWeather = async () => {
+    const code = icaoCode.trim().toUpperCase();
+
+    if (!code) {
+      setWeatherError('Enter a 4-letter ICAO code first');
+      return;
+    }
+
+    setWeatherLoading(true);
+    setWeatherError(null);
+
+    try {
+      const weather = await fetchAirportWeather(code);
+
+      if (weather.error) {
+        setWeatherError(weather.error);
+        return;
+      }
+
+      setMetar(weather.metar?.metar || 'No METAR returned for this airport');
+      setTaf(weather.taf?.taf || 'No TAF returned for this airport');
+    } catch (error) {
+      setWeatherError(error instanceof Error ? error.message : 'Failed to fetch weather');
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
 
   const calculateDensityAltitude = () => {
     const elevation = parseFloat(airportElevation);
@@ -84,6 +118,49 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
       </div>
 
       <div className="p-6">
+        <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950 p-4 sm:p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-2">ICAO Airport Code</label>
+              <input
+                type="text"
+                maxLength={4}
+                placeholder="KPHX"
+                value={icaoCode}
+                onChange={(e) => setIcaoCode(e.target.value.toUpperCase())}
+                className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white focus:border-red-600 uppercase tracking-widest"
+              />
+            </div>
+            <button
+              onClick={fetchWeather}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-md bg-red-700 hover:bg-red-800 text-white text-sm font-black uppercase tracking-widest transition-colors"
+            >
+              {weatherLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
+              Fetch Weather
+            </button>
+          </div>
+
+          {weatherError && (
+            <div className="flex items-start gap-3 rounded-md border border-red-900/60 bg-red-950/40 p-3 text-sm text-red-100">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-red-400" />
+              <span>{weatherError}</span>
+            </div>
+          )}
+
+          {(metar || taf) && !weatherError && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div className="rounded-md border border-zinc-800 bg-black p-3">
+                <div className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">METAR</div>
+                <p className="text-sm text-zinc-200 break-words whitespace-pre-wrap">{metar}</p>
+              </div>
+              <div className="rounded-md border border-zinc-800 bg-black p-3">
+                <div className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">TAF</div>
+                <p className="text-sm text-zinc-200 break-words whitespace-pre-wrap">{taf}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Tool Selector */}
         <div className="flex flex-wrap bg-black border border-zinc-800 rounded-sm overflow-hidden mb-6">
           <button

@@ -19,6 +19,7 @@ import {
   Gauge
 } from 'lucide-react';
 import sampleAircrafts from '../data/sampleAircrafts.json';
+import cgEnvelopeImage from '../../assets/centerofgravitycessna172.png';
 
 /**
  * AVIATIONPRO // MODULE_0x4FB2: STRATEGIC_WEIGHT_BALANCE_CALCULATOR
@@ -586,20 +587,23 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
                 </div>
               </div>
 
-              {/* CG Envelope Vector Mapping - simplified */}
-              <div className="lg:col-span-4 bg-[#18181b] border border-[#27272a] p-10 flex flex-col items-center justify-center group relative overflow-hidden">
-                 <div className="mt-8 w-full h-1.5 bg-black/60 relative overflow-hidden z-10 border border-[#27272a]">
-                    <div 
-                      className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-in-out ${results.isCGSafe ? 'bg-[#22c55e]' : 'bg-[#dc2626]'}`}
-                      style={{ width: `${Math.min(100, Math.max(0, ((results.rampCG - limits.forwardCG) / (limits.aftCG - limits.forwardCG)) * 100))}%` }}
-                    ></div>
-                 </div>
-                 <div className="flex justify-between w-full mt-3 text-[8px] font-black text-[#3f3f46] z-10">
-                    <span>FWD:{limits.forwardCG}"</span>
-                    <span>CURR:{results.rampCG.toFixed(2)}"</span>
-                    <span>AFT:{limits.aftCG}"</span>
-                 </div>
-              </div>
+                <div className="lg:col-span-4 bg-[#18181b] border border-[#27272a] p-4 sm:p-6 flex flex-col justify-end group relative overflow-hidden min-h-[360px] sm:min-h-[420px]">
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/35 to-black/80 z-0"></div>
+                  <img
+                   src={cgEnvelopeImage}
+                   alt="Cessna 172 center of gravity envelope"
+                   className="absolute inset-0 h-full w-full object-contain p-3 sm:p-6 opacity-85 z-0"
+                 />
+                  <div className="relative z-10 flex flex-col items-center justify-end gap-3 h-full">
+                    <div className="w-full max-w-[560px] rounded-md border border-zinc-800 bg-black/70 px-4 py-3 backdrop-blur-sm">
+                     <div className="flex justify-between w-full text-[8px] font-black uppercase tracking-widest text-zinc-300">
+                      <span>FWD: {limits.forwardCG}"</span>
+                      <span>CURR: {results.rampCG.toFixed(2)}"</span>
+                      <span>AFT: {limits.aftCG}"</span>
+                     </div>
+                    </div>
+                  </div>
+                </div>
             </footer>
 
           </main>

@@ -1,22 +1,20 @@
 import { useState } from 'react';
-import { Navigation, FileText, CheckSquare2, Plane } from 'lucide-react';
+import { Navigation, FileText, CheckSquare2 } from 'lucide-react';
 import FlightPlanForm from './FlightPlanForm';
 import Briefing from './Briefing';
 import Checklists from './Checklists';
-import AircraftProfileManager from './AircraftProfileManager';
 
 interface PlannerHubProps {
   darkMode: boolean;
 }
 
 const PlannerHub: React.FC<PlannerHubProps> = ({ darkMode }) => {
-  const [activePlannerTab, setActivePlannerTab] = useState<'flightplan' | 'briefing' | 'checklists' | 'aircraft'>('flightplan');
+  const [activePlannerTab, setActivePlannerTab] = useState<'flightplan' | 'briefing' | 'checklists'>('flightplan');
 
   const plannerTabs = [
     { id: 'flightplan', label: 'Flight Planner', icon: Navigation, component: FlightPlanForm },
     { id: 'briefing', label: 'Briefing', icon: FileText, component: Briefing },
-    { id: 'checklists', label: 'Checklists', icon: CheckSquare2, component: Checklists },
-    { id: 'aircraft', label: 'Aircraft', icon: Plane, component: AircraftProfileManager }
+    { id: 'checklists', label: 'Checklists', icon: CheckSquare2, component: Checklists }
   ];
 
   const ActiveComponent = plannerTabs.find(t => t.id === activePlannerTab)?.component || FlightPlanForm;

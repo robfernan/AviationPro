@@ -4,4 +4,6 @@ import {context} from '../models';
 
 export function GetWeather(arg1:string):Promise<string>;
 
+export function GetWeatherBundle(arg1:string):Promise<string>;
+
 export function Shutdown(arg1:context.Context):Promise<void>;

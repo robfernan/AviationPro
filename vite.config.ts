@@ -9,6 +9,14 @@ export default defineConfig({
   },
   server: {
     host: true,
+    proxy: {
+      '/aviationweather': {
+        target: 'https://aviationweather.gov',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/aviationweather/, ''),
+      },
+    },
   },
   build: {
     rollupOptions: {

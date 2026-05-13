@@ -46,7 +46,6 @@ As a project led by an Adobe Creative Professional, the UI isn't an afterthought
 
 ### 📓 Digital Logbook & Hangar
 *   **Persistent Storage:** Local-first data persistence for flight logs and aircraft profiles.
-*   **Hangar Management:** Save specific aircraft performance data (fuel burn, climb rates) to auto-populate the planner.
 
 ---
 
