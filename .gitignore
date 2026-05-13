@@ -1,0 +1,26 @@
+cat <<EOT >> .gitignore
+
+# Build outputs
+dist/
+build/
+bin/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Capacitor/Mobile specific
+App Data/
+EOT
+
+node_modules/
