@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">AVPRO Watch</string>
+    <string name="hello_world">AVPRO // %1$s</string>
+    <string name="tile_label">AVPRO Quick Glance</string>
+    <string name="complication_label">AVPRO Weather</string>
+    <string name="watch_face_name">AVPRO Aviator</string>
+</resources>

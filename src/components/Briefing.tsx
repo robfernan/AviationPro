@@ -110,169 +110,169 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
     doc.save(`Briefing_${fromAirport || 'UNKNOWN'}_${toAirport || 'UNKNOWN'}_${briefingData.date}.pdf`);
   };
 
-  const inputClass = 'bg-black text-white border border-zinc-800 rounded px-3 py-2 w-full';
+  const inputClass = 'bg-black text-white border border-zinc-800 rounded px-3 py-2 w-full text-sm';
 
-  const textareaClass = 'bg-black text-white border border-zinc-800 rounded px-3 py-2 w-full resize-none';
+  const textareaClass = 'bg-black text-white border border-zinc-800 rounded px-3 py-2 w-full resize-none text-sm';
 
   return (
-    <div className="p-6 space-y-6 rounded-lg border border-zinc-800 bg-black shadow-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <FileText className="text-red-500" size={32} />
-        <h1 className="text-3xl font-bold text-white">
+    <div className="p-4 sm:p-6 space-y-6 rounded-lg border border-zinc-800 bg-black shadow-2xl">
+      <div className="flex items-center gap-3 mb-4 sm:mb-6">
+        <FileText className="text-red-500 w-6 h-6 sm:w-8 sm:h-8" />
+        <h1 className="text-xl sm:text-3xl font-bold text-white">
           Flight Briefing Builder
         </h1>
       </div>
 
-      <div className="p-4 rounded bg-zinc-900">
-        <p className="text-zinc-300">
+      <div className="p-3 sm:p-4 rounded bg-zinc-900">
+        <p className="text-xs sm:text-sm text-zinc-300">
           Generate a complete preflight briefing PDF with flight plan, weather, fuel planning, and weight & balance information.
         </p>
       </div>
 
       {/* Flight Info */}
-      <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
-        <h2 className="text-xl font-semibold mb-4 text-white">Flight Information</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Date
-            </label>
-            <input
-              type="date"
-              value={briefingData.date}
-              onChange={(e) => setBriefingData({ ...briefingData, date: e.target.value })}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Pilot Name
-            </label>
-            <input
-              type="text"
-              placeholder="Your name"
-              value={briefingData.pilot}
-              onChange={(e) => setBriefingData({ ...briefingData, pilot: e.target.value })}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              From (ICAO)
-            </label>
-            <div className="flex gap-2">
+      <div className="p-3 sm:p-4 rounded border border-zinc-800 bg-zinc-900">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white uppercase tracking-wider">Flight Information</h2>
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+                Date
+              </label>
               <input
-                type="text"
-                placeholder="e.g., KJFK"
-                value={briefingData.departureAirport}
-                onChange={(e) => setBriefingData({ ...briefingData, departureAirport: e.target.value.toUpperCase() })}
+                type="date"
+                value={briefingData.date}
+                onChange={(e) => setBriefingData({ ...briefingData, date: e.target.value })}
                 className={inputClass}
               />
-              <button
-                onClick={() => fetchWeatherData(briefingData.departureAirport)}
-                disabled={loading || !briefingData.departureAirport}
-                className={`px-4 py-2 rounded font-medium transition flex items-center gap-2 whitespace-nowrap ${
-                  loading || !briefingData.departureAirport
-                    ? 'bg-zinc-700 text-zinc-300 cursor-not-allowed'
-                    : 'bg-red-700 text-white hover:bg-red-800'
-                }`}
-              >
-                {loading && <Loader2 size={18} className="animate-spin" />}
-                {!loading && 'Fetch Weather'}
-              </button>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+                Pilot Name
+              </label>
+              <input
+                type="text"
+                placeholder="Your name"
+                value={briefingData.pilot}
+                onChange={(e) => setBriefingData({ ...briefingData, pilot: e.target.value })}
+                className={inputClass}
+              />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              To (ICAO)
-            </label>
-            <input
-              type="text"
-              placeholder="e.g., KLAX"
-              value={briefingData.arrivalAirport}
-              onChange={(e) => setBriefingData({ ...briefingData, arrivalAirport: e.target.value.toUpperCase() })}
-              className={inputClass}
-            />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+                From (ICAO)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="KJFK"
+                  maxLength={4}
+                  value={briefingData.departureAirport}
+                  onChange={(e) => setBriefingData({ ...briefingData, departureAirport: e.target.value.toUpperCase() })}
+                  className={inputClass}
+                />
+                <button
+                  onClick={() => fetchWeatherData(briefingData.departureAirport)}
+                  disabled={loading || !briefingData.departureAirport}
+                  className={`px-3 py-2 rounded text-[10px] font-black uppercase tracking-widest transition flex items-center justify-center gap-2 whitespace-nowrap ${
+                    loading || !briefingData.departureAirport
+                      ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed border border-zinc-700'
+                      : 'bg-red-700 text-white hover:bg-red-800'
+                  }`}
+                >
+                  {loading && <Loader2 size={12} className="animate-spin" />}
+                  {!loading && 'Fetch'}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+                To (ICAO)
+              </label>
+              <input
+                type="text"
+                placeholder="KLAX"
+                maxLength={4}
+                value={briefingData.arrivalAirport}
+                onChange={(e) => setBriefingData({ ...briefingData, arrivalAirport: e.target.value.toUpperCase() })}
+                className={inputClass}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Aircraft Type
-            </label>
-            <input
-              type="text"
-              placeholder="e.g., Cessna 172"
-              value={briefingData.aircraftType}
-              onChange={(e) => setBriefingData({ ...briefingData, aircraftType: e.target.value })}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              N-Number
-            </label>
-            <input
-              type="text"
-              placeholder="e.g., N12345"
-              value={briefingData.nNumber}
-              onChange={(e) => setBriefingData({ ...briefingData, nNumber: e.target.value.toUpperCase() })}
-              className={inputClass}
-            />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+                Aircraft Type
+              </label>
+              <input
+                type="text"
+                placeholder="Cessna 172"
+                value={briefingData.aircraftType}
+                onChange={(e) => setBriefingData({ ...briefingData, aircraftType: e.target.value })}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+                N-Number
+              </label>
+              <input
+                type="text"
+                placeholder="N12345"
+                value={briefingData.nNumber}
+                onChange={(e) => setBriefingData({ ...briefingData, nNumber: e.target.value.toUpperCase() })}
+                className={inputClass}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Weather */}
-      <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
-        <h2 className="text-xl font-semibold mb-4 text-white">Weather & NOTAMs</h2>
+      <div className="p-3 sm:p-4 rounded border border-zinc-800 bg-zinc-900">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white uppercase tracking-wider">Weather & NOTAMs</h2>
 
         {weatherError && (
-          <div className="mb-4 p-3 rounded flex gap-2 bg-zinc-950 border border-red-700">
-            <AlertCircle size={20} className="text-red-500" />
-            <p className="text-red-300">{weatherError}</p>
+          <div className="mb-4 p-3 rounded flex gap-2 bg-black border border-red-900/50">
+            <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-400">{weatherError}</p>
           </div>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
               METAR
             </label>
             <textarea
-              placeholder="Paste METAR here or fetch from airport using the button above"
+              placeholder="Paste METAR or use Fetch button"
               value={briefingData.metar}
               onChange={(e) => setBriefingData({ ...briefingData, metar: e.target.value })}
               className={textareaClass}
               rows={3}
             />
-            {briefingData.metar && (
-              <p className="text-xs mt-1 text-zinc-500">
-                Raw METAR observation
-              </p>
-            )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
               TAF
             </label>
             <textarea
-              placeholder="Paste TAF here or fetch from airport using the button above"
+              placeholder="Paste TAF or use Fetch button"
               value={briefingData.taf}
               onChange={(e) => setBriefingData({ ...briefingData, taf: e.target.value })}
               className={textareaClass}
               rows={3}
             />
-            {briefingData.taf && (
-              <p className="text-xs mt-1 text-zinc-500">
-                Terminal Aerodrome Forecast (valid 24-30 hours)
-              </p>
-            )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              NOTAMs (one per line)
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+              NOTAMs
             </label>
             <textarea
-              placeholder="Paste NOTAMs here (one per line)"
+              placeholder="Paste NOTAMs (one per line)"
               value={briefingData.notams}
               onChange={(e) => setBriefingData({ ...briefingData, notams: e.target.value })}
               className={textareaClass}
@@ -283,12 +283,12 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
       </div>
 
       {/* Fuel Plan */}
-      <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
-        <h2 className="text-xl font-semibold mb-4 text-white">Fuel Plan</h2>
+      <div className="p-3 sm:p-4 rounded border border-zinc-800 bg-zinc-900">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white uppercase tracking-wider">Fuel Plan</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Total Distance (nm)
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+              Dist (nm)
             </label>
             <input
               type="text"
@@ -301,8 +301,8 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Total Time (hours)
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+              Time (hrs)
             </label>
             <input
               type="text"
@@ -315,8 +315,8 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Fuel Burned (gallons)
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+              Burn (gal)
             </label>
             <input
               type="text"
@@ -329,8 +329,8 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Reserve (45 min, gallons)
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+              Reserve
             </label>
             <input
               type="text"
@@ -346,12 +346,12 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
       </div>
 
       {/* Weight & Balance */}
-      <div className="p-4 rounded border border-zinc-800 bg-zinc-900">
-        <h2 className="text-xl font-semibold mb-4 text-white">Weight & Balance</h2>
-        <div className="grid grid-cols-3 gap-4">
+      <div className="p-3 sm:p-4 rounded border border-zinc-800 bg-zinc-900">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white uppercase tracking-wider">Weight & Balance</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Ramp Weight (lbs)
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+              Ramp (lbs)
             </label>
             <input
               type="text"
@@ -364,8 +364,8 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              Takeoff Weight (lbs)
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+              Takeoff (lbs)
             </label>
             <input
               type="text"
@@ -378,8 +378,8 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-zinc-300">
-              CG (inches)
+            <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
+              CG (in)
             </label>
             <input
               type="text"
@@ -395,19 +395,19 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
       </div>
 
       {/* Generate PDF Button */}
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
         <button
           onClick={handleGeneratePDF}
-          className="flex items-center gap-2 px-6 py-3 rounded font-semibold transition bg-red-700 text-white hover:bg-red-800"
+          className="flex items-center justify-center gap-2 px-6 py-4 rounded text-xs font-black uppercase tracking-[0.2em] transition bg-red-700 text-white hover:bg-red-800 shadow-[0_0_15px_rgba(220,38,38,0.3)] active:scale-95"
         >
-          <Download size={20} />
-          Generate & Download PDF
+          <Download size={16} />
+          Generate PDF
         </button>
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 px-6 py-3 rounded font-semibold transition bg-zinc-900 text-zinc-100 hover:bg-zinc-800"
+          className="flex items-center justify-center gap-2 px-6 py-4 rounded text-xs font-black uppercase tracking-[0.2em] transition bg-zinc-900 text-zinc-400 hover:bg-zinc-800 border border-zinc-800 active:scale-95"
         >
-          Print
+          Print Briefing
         </button>
       </div>
     </div>

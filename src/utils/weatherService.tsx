@@ -1,5 +1,8 @@
-// NOAA Aviation Weather Center integration
-// Fetches METAR and TAF data for flight planning
+/**
+ * NOAA Aviation Weather Center integration
+ * Fetches METAR and TAF data for flight planning
+ */
+import { isNative } from './platform';
 
 interface METARData {
   icao: string;
@@ -44,7 +47,9 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
  * Uses the free API through the local dev proxy or Wails desktop bridge.
  */
 
-const WEATHER_PROXY_BASE = '/aviationweather';
+const WEATHER_PROXY_BASE = isNative
+  ? 'https://aviationweather.gov'
+  : '/aviationweather';
 
 const getWeatherUrl = (path: string, icaoCode: string) => {
   const code = icaoCode.toUpperCase();

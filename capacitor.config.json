@@ -1,0 +1,13 @@
+{
+  "appId": "com.aviationpro.app",
+  "appName": "AviationPro",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}
