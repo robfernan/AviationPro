@@ -41,27 +41,6 @@
                 android:resource="@drawable/tile_preview" />
         </service>
 
-        <service
-            android:name=".watchface.AVPROWatchFaceService"
-            android:exported="true"
-            android:label="@string/watch_face_name"
-            android:permission="android.permission.BIND_WALLPAPER">
-            <intent-filter>
-                <action android:name="android.service.wallpaper.WallpaperService" />
-                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
-            </intent-filter>
-
-            <meta-data
-                android:name="com.google.android.wearable.watchface.preview"
-                android:resource="@drawable/tile_preview" />
-            <meta-data
-                android:name="com.google.android.wearable.watchface.preview_circular"
-                android:resource="@drawable/tile_preview" />
-            <meta-data
-                android:name="android.service.wallpaper"
-                android:resource="@xml/watch_face" />
-        </service>
-
         <uses-library
             android:name="com.google.android.wearable"
             android:required="true" />
@@ -83,8 +62,6 @@
             android:theme="@style/MainActivityTheme.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
