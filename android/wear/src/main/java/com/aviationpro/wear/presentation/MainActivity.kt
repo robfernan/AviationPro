@@ -13,11 +13,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
+import com.aviationpro.wear.R
 import com.aviationpro.wear.presentation.theme.AndroidTheme
 import java.time.LocalTime
 import java.time.ZoneId
@@ -88,7 +90,7 @@ fun AVPROWatchPreview() {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "VFR",
+                    text = stringResource(R.string.weather_placeholder),
                     color = Color.White,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
