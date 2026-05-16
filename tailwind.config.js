@@ -5,8 +5,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        'theme-accent': '#2563eb',
-        'theme-accent-dark': '#3b82f6',
+        'avpro-red': '#FE0909',
+        'theme-accent': '#FE0909',
+        'theme-accent-dark': '#FE0909',
         'theme-card': '#ffffff',
         'theme-card-dark': '#1e293b',
         'theme-header': '#f1f5f9',

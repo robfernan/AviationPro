@@ -86,7 +86,7 @@ const THEME = {
   surface: '#18181b',
   surfaceAlt: '#0c0c0e',
   border: '#27272a',
-  accent: '#dc2626', 
+  accent: '#FE0909',
   textPrimary: '#f4f4f5',
   textSecondary: '#71717a',
   textMuted: '#3f3f46',

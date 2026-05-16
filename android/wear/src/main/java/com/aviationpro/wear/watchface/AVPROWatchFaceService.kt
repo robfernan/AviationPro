@@ -57,7 +57,7 @@ class AVPROWatchFaceService : WatchFaceService() {
         false // clearWithBackgroundTintBeforeRenderingHighlightLayer
     ) {
         private val zuluPaint = Paint().apply {
-            color = Color.parseColor("#DC2626") // AVPRO Red
+            color = Color.parseColor("#FE0909") // AVPRO Red
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
             textSize = 80f
