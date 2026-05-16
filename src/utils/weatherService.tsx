@@ -73,12 +73,18 @@ export async function fetchMETAR(icaoCode: string): Promise<METARData | null> {
     const data = await response.json();
 
     // NOAA returns array, take first result
-    if (data && Array.isArray(data) && data.length > 0) {
-      const metarData = data[0];
+      if (data && Array.isArray(data) && data.length > 0) {
+        const metarData = data[0];
+        const category = metarData.flightCategory || 'VFR';
 
-      const result: METARData = {
-        icao: icaoCode.toUpperCase(),
-        metar: metarData.rawOb,
+        // Update Native Watch Bridge if available
+        if (isNative && (window as any).AndroidWatchBridge) {
+          (window as any).AndroidWatchBridge.updateWatchWeather(category);
+        }
+
+        return {
+          icao: icaoCode.toUpperCase(),
+          metar: metarData.rawOb,
         wind: {
           direction: metarData.wdir?.value || 0,
           speed: metarData.wspd?.value || 0,
