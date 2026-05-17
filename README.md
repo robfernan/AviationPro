@@ -47,7 +47,8 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 
 ### ⌚ Wear OS Companion
 *   **Zulu-First Design:** High-contrast digital UTC clock for rapid mission timing.
-*   **Data Bridge:** Push METAR categories (VFR/IFR) from your phone directly to your watch face complication.
+*   **Live Data Bridge:** The watch app acts as a dedicated live display for METAR categories (VFR/IFR) synced directly from the phone.
+*   **Watch Face Complications:** Support for "SmallBox" complications to see flight data on any watch face.
 
 ---
 
@@ -84,6 +85,7 @@ npx cap run android
 - [x] **Desktop Release:** Stabilized frameless Wails application.
 - [x] **Mobile Port:** Fully responsive Android/iOS core via Capacitor.
 - [x] **Wear OS:** Zulu face with live weather complications.
+- [x] **Real-time Sync:** Phone-to-Watch data bridge for flight categories.
 - [ ] **Cross-Device Sync:** Optional cloud-relay for logbook backups.
 
 ---

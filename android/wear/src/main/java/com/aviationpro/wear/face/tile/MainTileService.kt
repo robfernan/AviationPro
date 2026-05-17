@@ -29,7 +29,7 @@ class MainTileService : TileService() {
         Futures.immediateFuture(resources())
 }
 
-private fun resources(requestParams: ResourcesRequest? = null): Resources {
+private fun resources(@Suppress("UNUSED_PARAMETER") requestParams: ResourcesRequest? = null): Resources {
     return Resources.Builder()
         .setVersion(RESOURCES_VERSION)
         .build()

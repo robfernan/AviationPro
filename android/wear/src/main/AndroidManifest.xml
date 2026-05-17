@@ -28,6 +28,15 @@
         </service>
 
         <service
+            android:name="com.aviationpro.wear.face.complication.AVPROListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data android:host="*" android:pathPrefix="/weather" android:scheme="wear" />
+            </intent-filter>
+        </service>
+
+        <service
             android:name="com.aviationpro.wear.face.tile.MainTileService"
             android:exported="true"
             android:label="@string/tile_label"
@@ -55,7 +64,6 @@
             android:taskAffinity="">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
