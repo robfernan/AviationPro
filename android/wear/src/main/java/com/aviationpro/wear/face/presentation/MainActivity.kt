@@ -1,9 +1,11 @@
 package com.aviationpro.wear.face.presentation
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,28 +22,45 @@ import com.google.android.gms.wearable.Wearable
 
 class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
-    private var metarCategory by mutableStateOf("FETCHING...")
+    private val _metarCategory = mutableStateOf("INITIALIZING")
+    private val TAG = "AVPRO_WATCH"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initial fetch of data
-        Wearable.getDataClient(this).dataItems.addOnSuccessListener { dataItems ->
-            for (item in dataItems) {
-                if (item.uri.path == "/weather") {
-                    metarCategory = DataMapItem.fromDataItem(item).dataMap.getString("category", "VFR")
-                }
-            }
-        }
+        refreshData()
 
         setContent {
-            WatchAppScreen(metarCategory)
+            WatchAppScreen(_metarCategory.value) {
+                refreshData()
+            }
+        }
+    }
+
+    private fun refreshData() {
+        Log.d(TAG, "Refreshing data from DataClient...")
+        Wearable.getDataClient(this).dataItems.addOnSuccessListener { dataItems ->
+            Log.d(TAG, "Successfully fetched ${dataItems.count} items")
+            for (item in dataItems) {
+                if (item.uri.path == "/weather") {
+                    val cat = DataMapItem.fromDataItem(item).dataMap.getString("category", "VFR")
+                    Log.d(TAG, "Found weather category in storage: $cat")
+                    _metarCategory.value = cat
+                }
+            }
+            if (_metarCategory.value == "INITIALIZING") {
+                _metarCategory.value = "NO DATA"
+            }
+        }.addOnFailureListener { e ->
+            Log.e(TAG, "Failed to fetch data items", e)
+            _metarCategory.value = "SYNC ERR"
         }
     }
 
     override fun onResume() {
         super.onResume()
         Wearable.getDataClient(this).addListener(this)
+        refreshData()
     }
 
     override fun onPause() {
@@ -50,20 +69,24 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
+        Log.d(TAG, "onDataChanged triggered with ${dataEvents.count} events")
         for (event in dataEvents) {
             if (event.dataItem.uri.path == "/weather") {
-                metarCategory = DataMapItem.fromDataItem(event.dataItem).dataMap.getString("category", "VFR")
+                val cat = DataMapItem.fromDataItem(event.dataItem).dataMap.getString("category", "VFR")
+                Log.d(TAG, "Data changed! New category: $cat")
+                _metarCategory.value = cat
             }
         }
     }
 }
 
 @Composable
-fun WatchAppScreen(category: String) {
+fun WatchAppScreen(category: String, onRefresh: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(Color.Black)
+            .clickable { onRefresh() }, // Allow user to tap to force refresh
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -86,15 +109,22 @@ fun WatchAppScreen(category: String) {
 
             Text(
                 text = category,
-                color = if (category == "IFR" || category == "LIFR") Color(0xFFFE0909) else Color.White,
-                fontSize = 36.sp,
+                color = if (category == "IFR" || category == "LIFR" || category == "SYNC ERR") Color(0xFFFE0909) else Color.White,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Black
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "SYNCED WITH MIAD01",
+                text = "TAP TO REFRESH",
+                color = Color.DarkGray,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "PAIRED: MIAD01",
                 color = Color(0xFF22C55E),
                 fontSize = 8.sp,
                 fontWeight = FontWeight.Bold

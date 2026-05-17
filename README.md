@@ -47,7 +47,7 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 
 ### ⌚ Wear OS Companion
 *   **Zulu-First Watch Face:** High-contrast digital UTC clock for rapid mission timing.
-*   **Live Data App:** A built-in watch app that displays METAR flight categories (VFR/IFR) synced instantly from the MIAD01 phone.
+*   **Live Data App:** A built-in watch app that displays METAR flight categories (VFR/IFR) synced instantly from the MIAD01 phone via the **Wearable Data Layer**.
 *   **Watch Face Complications:** Support for "SmallBox" complications to see weather data on any watch face.
 
 ---
@@ -56,6 +56,7 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 - **Desktop Backend:** Golang + Wails for native performance.
 - **Mobile/Web Core:** React 18 + TypeScript + Vite.
 - **Mobile Bridge:** Capacitor for high-speed native Android/iOS ports.
+- **Data Sync:** Android Wearable Data Layer API for ultra-low latency Phone-to-Watch communication.
 - **Persistence:** IndexedDB (Dexie) for robust, offline-first data storage.
 
 ---
