@@ -10,11 +10,14 @@ export interface Aircraft {
 export interface FlightLog {
   id?: number;
   date: string;
-  origin: string;
-  destination: string;
-  route: string;
-  duration: number;
-  aircraftId?: number;
+  aircraftNNumber: string;
+  flightTime: string;
+  night: boolean;
+  crossCountry: boolean;
+  solo: boolean;
+  dual: boolean;
+  notes: string;
+  timestamp: number;
 }
 
 export interface WCAResult {

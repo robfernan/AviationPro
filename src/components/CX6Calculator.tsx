@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wind, Gauge, Clock, Fuel, Zap, Scale } from 'lucide-react';
+import { Wind, Gauge, Clock, Fuel, Zap, Scale, Send } from 'lucide-react';
 import { AviationMath } from '../core/aviationMath';
 // Import the full-scale W&B module we just finalized
 import WeightBalanceCalculator from './WeightBalanceCalculator';
@@ -63,6 +63,21 @@ const WindTriangleView = () => {
   const [course, setCourse] = useState(90);
   const res = AviationMath.calculateWCA(course, tas, wDir, wSpd);
 
+  const handleSendToBriefing = () => {
+    const snapshot = {
+      tas,
+      course,
+      windDir: wDir,
+      windSpd,
+      heading: res.heading,
+      gs: res.groundSpeed,
+      wca: res.windCorrectionAngle,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('latest_wind_result', JSON.stringify(snapshot));
+    alert("Wind calculation sent to Briefing Builder.");
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -76,6 +91,12 @@ const WindTriangleView = () => {
         <Stat label="GS" val={`${res.groundSpeed}`} />
         <Stat label="WCA" val={`${res.windCorrectionAngle}°`} color="text-red-500" />
       </div>
+      <button
+        onClick={handleSendToBriefing}
+        className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest"
+      >
+        <Send size={12} /> Push_To_Briefing
+      </button>
     </div>
   );
 };

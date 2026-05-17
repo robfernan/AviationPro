@@ -109,7 +109,13 @@ fun WatchAppScreen(category: String, onRefresh: () -> Unit) {
 
             Text(
                 text = category,
-                color = if (category == "IFR" || category == "LIFR" || category == "SYNC ERR") Color(0xFFFE0909) else Color.White,
+                color = when (category) {
+                    "VFR" -> Color(0xFF22C55E)  // Green
+                    "MVFR" -> Color(0xFF3B82F6) // Blue
+                    "IFR" -> Color(0xFFFE0909)  // Red
+                    "LIFR" -> Color(0xFFA855F7) // Purple
+                    else -> Color.White
+                },
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Black
             )

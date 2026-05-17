@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FileText, Download, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Download, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { generateBriefingPDF } from '../utils/briefingBuilder';
 import { fetchAirportWeather } from '../utils/weatherService';
 
@@ -33,6 +33,37 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
 
   const [loading, setLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
+
+  const handleSyncLatest = () => {
+    const latestWind = localStorage.getItem('latest_wind_result');
+    const latestWB = localStorage.getItem('latest_wb_result');
+
+    setBriefingData(prev => {
+      let updated = { ...prev };
+
+      if (latestWind) {
+        const data = JSON.parse(latestWind);
+        // Only sync if it's from the last hour
+        if (Date.now() - data.timestamp < 3600000) {
+          updated.departureAirport = updated.departureAirport || ''; // Keep existing if set
+          // We could add notes here
+        }
+      }
+
+      if (latestWB) {
+        const data = JSON.parse(latestWB);
+        if (Date.now() - data.timestamp < 3600000) {
+          updated.weightBalance = {
+            rampWeight: data.rampWeight,
+            takeoffWeight: data.takeoffWeight,
+            cg: data.cg
+          };
+        }
+      }
+
+      return updated;
+    });
+  };
 
   const fetchWeatherData = async (icao: string) => {
     if (!icao.trim()) {
@@ -123,10 +154,16 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
         </h1>
       </div>
 
-      <div className="p-3 sm:p-4 rounded bg-zinc-900">
+      <div className="p-3 sm:p-4 rounded bg-zinc-900 flex justify-between items-center">
         <p className="text-xs sm:text-sm text-zinc-300">
           Generate a complete preflight briefing PDF with flight plan, weather, fuel planning, and weight & balance information.
         </p>
+        <button
+          onClick={handleSyncLatest}
+          className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-all"
+        >
+          <RefreshCw size={12} /> Sync_Hub
+        </button>
       </div>
 
       {/* Flight Info */}

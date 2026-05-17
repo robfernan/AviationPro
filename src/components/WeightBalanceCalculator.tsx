@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { 
   Plus, 
-  // Minus removed to clear TS:6133 warning
-  Printer, 
+  Printer,
   AlertTriangle, 
   CheckCircle2, 
   Info, 
@@ -16,8 +15,11 @@ import {
   Clipboard,
   History,
   Layers,
-  Gauge
+  Gauge,
+  Send
 } from 'lucide-react';
+import { db } from '../services/PersistenceService';
+import { Aircraft } from '../types/aviation';
 import sampleAircrafts from '../data/sampleAircrafts.json';
 import cgEnvelopeImage from '../../assets/centerofgravitycessna172.png';
 
@@ -132,11 +134,21 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const [profileId, setProfileId] = useState<string>('c172');
+  const [hangarPlanes, setHangarPlanes] = useState<Aircraft[]>([]);
   const [isLocked, setIsLocked] = useState<boolean>(true);
   const [activeCategory, setActiveCategory] = useState<'NORMAL' | 'UTILITY'>('NORMAL');
   const [weightItems, setWeightItems] = useState<WeightItem[]>([]);
   const [sysLogs, setSysLogs] = useState<string[]>(['SYS_BOOT: OK', 'MODULE_WB: READY']);
-  
+
+  // Load Hangar
+  useEffect(() => {
+    const loadHangar = async () => {
+      const planes = await db.getAllAircraft();
+      setHangarPlanes(planes);
+    };
+    loadHangar();
+  }, []);
+
   const [limits, setLimits] = useState<AircraftLimits>({
     maxWeight: 2550,
     forwardCG: 35.0,
@@ -158,11 +170,18 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
   });
 
   useEffect(() => {
-    const profile = (sampleAircrafts as any[]).find(a => a.id === profileId);
+    // Check Hangar first
+    const hangarPlane = hangarPlanes.find(p => String(p.id) === profileId);
+    const samplePlane = (sampleAircrafts as any[]).find(a => a.id === profileId);
+
+    const profile = hangarPlane || samplePlane;
+
     if (profile) {
-      setSysLogs(prev => [`LOAD_PROFILE: ${profileId}`, ...prev].slice(0, 5));
+      const tail = 'tailNumber' in profile ? profile.tailNumber : profile.id;
+      setSysLogs(prev => [`LOAD_AIRFRAME: ${tail}`, ...prev].slice(0, 5));
+
       setLimits({
-        maxWeight: profile.maxWeight || 2550,
+        maxWeight: profile.maxGrossWeight || profile.maxWeight || 2550,
         forwardCG: profile.forwardCG || 35.0,
         aftCG: profile.aftCG || 47.3,
         utilityMaxWeight: profile.utilityMaxWeight || 2200
@@ -190,7 +209,20 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
         { id: '6', name: 'FUEL LOAD (TOTAL LBS)', weight: String(profile.fuelWeightLbs || 318), arm: String(profile.fuelArm || 48), isLocked: true, category: 'fuel' }
       ]);
     }
-  }, [profileId]);
+  }, [profileId, hangarPlanes]);
+
+  const handleSendToBriefing = () => {
+    // Phase 1 Integration: Save current calculation to temporary storage for Briefing module
+    const snapshot = {
+      rampWeight: results.rampW.toFixed(1),
+      takeoffWeight: results.takeoffW.toFixed(1),
+      cg: results.rampCG.toFixed(2),
+      timestamp: Date.now()
+    };
+    localStorage.setItem('latest_wb_result', JSON.stringify(snapshot));
+    setSysLogs(prev => ['SYSTEM: EXPORT_TO_BRIEFING', ...prev].slice(0, 5));
+    alert("Weight & Balance data sent to Briefing Builder.");
+  };
 
   const handleAddItem = useCallback(() => {
     const newItem: WeightItem = {
@@ -277,6 +309,13 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
                 </button>
               ))}
             </div>
+            <button
+              onClick={handleSendToBriefing}
+              className="flex items-center space-x-3 px-6 py-3 bg-[#18181b] border border-[#27272a] hover:border-[#dc2626] transition-all group"
+            >
+              <Send className="w-4 h-4 text-[#71717a] group-hover:text-[#dc2626]" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Push_To_Briefing</span>
+            </button>
             <button className="flex items-center space-x-3 px-6 py-3 bg-[#18181b] border border-[#27272a] hover:bg-[#27272a] transition-all group">
               <Save className="w-4 h-4 text-[#71717a] group-hover:text-white" />
               <span className="text-[10px] font-black uppercase tracking-widest">Store_Manifest</span>
@@ -317,9 +356,18 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
                       onChange={(e) => setProfileId(e.target.value)}
                       className="w-full p-4 bg-black border border-[#27272a] rounded-none text-white font-mono text-xs appearance-none focus:border-[#dc2626] outline-none disabled:opacity-40 transition-all cursor-pointer"
                     >
-                      {(sampleAircrafts as any[]).map(a => (
-                        <option key={a.id} value={a.id} className="bg-black text-white">{a.name.toUpperCase()}</option>
-                      ))}
+                      <optgroup label="Standard Templates" className="bg-zinc-900 text-zinc-500 uppercase text-[10px]">
+                        {(sampleAircrafts as any[]).map(a => (
+                          <option key={a.id} value={a.id} className="bg-black text-white">{a.name.toUpperCase()}</option>
+                        ))}
+                      </optgroup>
+                      {hangarPlanes.length > 0 && (
+                        <optgroup label="My Hangar" className="bg-zinc-900 text-zinc-500 uppercase text-[10px]">
+                          {hangarPlanes.map(p => (
+                            <option key={p.id} value={String(p.id)} className="bg-black text-white">{p.tailNumber} ({p.model})</option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
                     <ChevronDown className="absolute right-4 top-4.5 w-5 h-5 text-[#71717a] pointer-events-none" />
                   </div>

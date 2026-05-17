@@ -12,6 +12,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [metar, setMetar] = useState<string>('');
   const [taf, setTaf] = useState<string>('');
+  const [flightCategory, setFlightCategory] = useState<'VFR' | 'MVFR' | 'IFR' | 'LIFR' | null>(null);
   const [airportElevation, setAirportElevation] = useState<string>('');
   const [temperature, setTemperature] = useState<string>('');
   const [altimeterSetting, setAltimeterSetting] = useState<string>('29.92');
@@ -39,6 +40,7 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
 
       setMetar(weather.metar?.metar || 'No METAR returned for this airport');
       setTaf(weather.taf?.taf || 'No TAF returned for this airport');
+      setFlightCategory(weather.metar?.flightCategory || null);
     } catch (error) {
       setWeatherError(error instanceof Error ? error.message : 'Failed to fetch weather');
     } finally {
@@ -148,14 +150,29 @@ const WeatherCalculator: React.FC<WeatherCalculatorProps> = ({ darkMode }) => {
           )}
 
           {(metar || taf) && !weatherError && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <div className="rounded-md border border-zinc-800 bg-black p-3">
-                <div className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">METAR</div>
-                <p className="text-sm text-zinc-200 break-words whitespace-pre-wrap">{metar}</p>
-              </div>
-              <div className="rounded-md border border-zinc-800 bg-black p-3">
-                <div className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">TAF</div>
-                <p className="text-sm text-zinc-200 break-words whitespace-pre-wrap">{taf}</p>
+            <div className="space-y-3">
+              {flightCategory && (
+                <div className="flex items-center gap-3 p-3 bg-black border border-zinc-800 rounded">
+                  <div className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500">Flight Category:</div>
+                  <div className={`text-xl font-black tracking-widest ${
+                    flightCategory === 'VFR' ? 'text-green-500' :
+                    flightCategory === 'MVFR' ? 'text-blue-500' :
+                    flightCategory === 'IFR' ? 'text-red-500' :
+                    'text-purple-500'
+                  }`}>
+                    {flightCategory}
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div className="rounded-md border border-zinc-800 bg-black p-3">
+                  <div className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">METAR</div>
+                  <p className="text-sm text-zinc-200 break-words whitespace-pre-wrap">{metar}</p>
+                </div>
+                <div className="rounded-md border border-zinc-800 bg-black p-3">
+                  <div className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-2">TAF</div>
+                  <p className="text-sm text-zinc-200 break-words whitespace-pre-wrap">{taf}</p>
+                </div>
               </div>
             </div>
           )}

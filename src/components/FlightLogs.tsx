@@ -1,28 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Calendar, Clock, Download, Edit2, FileText, Plane, Plus, Search, Trash2 } from 'lucide-react';
-
-interface FlightLog {
-  id: string;
-  date: string;
-  aircraftNNumber: string;
-  flightTime: string;
-  night: boolean;
-  crossCountry: boolean;
-  solo: boolean;
-  dual: boolean;
-  notes: string;
-  timestamp: number;
-}
+import { db } from '../services/PersistenceService';
+import { FlightLog } from '../types/aviation';
 
 interface FlightLogsProps {
   darkMode: boolean;
 }
 
 const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
-  const [flightLogs, setFlightLogs] = useState<FlightLog[]>(() => {
-    const saved = localStorage.getItem('flightLogs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [flightLogs, setFlightLogs] = useState<FlightLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [newLog, setNewLog] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -36,70 +23,115 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
   });
 
   const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [editLog, setEditLog] = useState<FlightLog | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'time-desc' | 'time-asc'>('date-desc');
 
+  // Load and Migrate Data
   useEffect(() => {
-    localStorage.setItem('flightLogs', JSON.stringify(flightLogs));
-  }, [flightLogs]);
+    const initData = async () => {
+      try {
+        // 1. Check for legacy data in localStorage
+        const legacyData = localStorage.getItem('flightLogs');
+        if (legacyData) {
+          const logs = JSON.parse(legacyData);
+          if (Array.isArray(logs) && logs.length > 0) {
+            // Import legacy logs to Dexie
+            for (const log of logs) {
+              const { id, ...cleanLog } = log; // Remove string ID to let Dexie assign number
+              await db.flights.add({
+                ...cleanLog,
+                timestamp: cleanLog.timestamp || Date.now()
+              });
+            }
+          }
+          // 2. Clear legacy data once migrated
+          localStorage.removeItem('flightLogs');
+        }
 
-  const addFlightLog = () => {
+        // 3. Load from Dexie
+        const items = await db.flights.toArray();
+        setFlightLogs(items);
+      } catch (error) {
+        console.error("Logbook Migration Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initData();
+  }, []);
+
+  const refreshLogs = async () => {
+    const items = await db.flights.toArray();
+    setFlightLogs(items);
+  };
+
+  const addFlightLog = async () => {
     if (!newLog.aircraftNNumber.trim() || !newLog.flightTime.trim()) {
       alert('Please fill in aircraft N-number and flight time');
       return;
     }
 
-    const log: FlightLog = {
-      id: Date.now().toString(),
-      date: newLog.date,
-      aircraftNNumber: newLog.aircraftNNumber.toUpperCase(),
-      flightTime: newLog.flightTime,
-      night: newLog.night,
-      crossCountry: newLog.crossCountry,
-      solo: newLog.solo,
-      dual: newLog.dual,
-      notes: newLog.notes,
-      timestamp: Date.now()
-    };
+    try {
+      const log: FlightLog = {
+        date: newLog.date,
+        aircraftNNumber: newLog.aircraftNNumber.toUpperCase(),
+        flightTime: newLog.flightTime,
+        night: newLog.night,
+        crossCountry: newLog.crossCountry,
+        solo: newLog.solo,
+        dual: newLog.dual,
+        notes: newLog.notes,
+        timestamp: Date.now()
+      };
 
-    setFlightLogs([log, ...flightLogs]);
-    setNewLog({
-      date: new Date().toISOString().split('T')[0],
-      aircraftNNumber: '',
-      flightTime: '',
-      night: false,
-      crossCountry: false,
-      solo: false,
-      dual: false,
-      notes: ''
-    });
-    setIsAdding(false);
+      await db.flights.add(log);
+      await refreshLogs();
+
+      setNewLog({
+        date: new Date().toISOString().split('T')[0],
+        aircraftNNumber: '',
+        flightTime: '',
+        night: false,
+        crossCountry: false,
+        solo: false,
+        dual: false,
+        notes: ''
+      });
+      setIsAdding(false);
+    } catch (err) {
+      console.error("Failed to add flight log:", err);
+    }
   };
 
   const startEditingLog = (log: FlightLog) => {
-    setEditingId(log.id);
-    setEditLog({ ...log });
+    if (log.id) {
+      setEditingId(log.id);
+      setEditLog({ ...log });
+    }
   };
 
-  const updateFlightLog = () => {
-    if (!editLog) return;
+  const updateFlightLog = async () => {
+    if (!editLog || !editingId) return;
     if (!editLog.aircraftNNumber.trim() || !editLog.flightTime.trim()) {
       alert('Please fill in aircraft N-number and flight time');
       return;
     }
 
-    setFlightLogs(
-      flightLogs.map((log) =>
-        log.id === editLog.id
-          ? { ...editLog, aircraftNNumber: editLog.aircraftNNumber.toUpperCase() }
-          : log
-      )
-    );
-    setEditingId(null);
-    setEditLog(null);
+    try {
+      await db.flights.update(editingId, {
+        ...editLog,
+        aircraftNNumber: editLog.aircraftNNumber.toUpperCase()
+      });
+      await refreshLogs();
+      setEditingId(null);
+      setEditLog(null);
+    } catch (err) {
+      console.error("Failed to update log:", err);
+    }
   };
 
   const cancelEdit = () => {
@@ -107,9 +139,11 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
     setEditLog(null);
   };
 
-  const deleteFlightLog = (id: string) => {
+  const deleteFlightLog = async (id: number | undefined) => {
+    if (!id) return;
     if (window.confirm('Are you sure you want to delete this flight log?')) {
-      setFlightLogs(flightLogs.filter((log) => log.id !== id));
+      await db.flights.delete(id);
+      await refreshLogs();
     }
   };
 
@@ -189,6 +223,8 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
     URL.revokeObjectURL(url);
   };
 
+  if (loading) return <div className="p-6 text-zinc-500 font-mono">INITIALIZING LOGBOOK...</div>;
+
   return (
     <div className={darkMode ? 'rounded-lg shadow-lg border border-zinc-800 bg-black' : 'rounded-lg shadow-lg border border-zinc-800 bg-black'}>
       <div className="bg-zinc-900 border-b border-zinc-800 p-6">
@@ -213,18 +249,14 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={exportToCSV}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                'bg-zinc-900 hover:bg-zinc-800 text-zinc-100'
-              }`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-100`}
             >
               <Download className="w-4 h-4" />
               <span>Export CSV</span>
             </button>
             <button
               onClick={() => setIsAdding(!isAdding)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                'bg-red-700 hover:bg-red-800 text-white'
-              }`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 bg-red-700 hover:bg-red-800 text-white`}
             >
               <Plus className="w-4 h-4" />
               <span>{isAdding ? 'Cancel' : 'Add Flight'}</span>
@@ -240,17 +272,13 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search aircraft, notes, or date"
-              className={`w-full pl-10 pr-3 py-3 border rounded-md ${
-                'bg-black border-zinc-800 text-white'
-              }`}
+              className={`w-full pl-10 pr-3 py-3 border rounded-md bg-black border-zinc-800 text-white`}
             />
           </div>
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value as typeof dateFilter)}
-            className={`w-full px-3 py-3 border rounded-md ${
-              'bg-black border-zinc-800 text-white'
-            }`}
+            className={`w-full px-3 py-3 border rounded-md bg-black border-zinc-800 text-white`}
           >
             <option value="all">All dates</option>
             <option value="today">Today</option>
@@ -260,9 +288,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className={`w-full px-3 py-3 border rounded-md ${
-              'bg-black border-zinc-800 text-white'
-            }`}
+            className={`w-full px-3 py-3 border rounded-md bg-black border-zinc-800 text-white`}
           >
             <option value="date-desc">Newest first</option>
             <option value="date-asc">Oldest first</option>
@@ -272,25 +298,25 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
         </div>
 
         {isAdding && (
-          <div className="mb-6 p-4 rounded-lg bg-zinc-900">
-            <h4 className="font-medium mb-4">Add New Flight Log</h4>
+          <div className="mb-6 p-4 rounded-lg bg-zinc-900 border border-zinc-800">
+            <h4 className="font-black uppercase tracking-widest text-xs mb-4 text-zinc-500">Add New Flight Log</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  <Calendar className="w-4 h-4 inline mr-2" />
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">
+                  <Calendar className="w-3 h-3 inline mr-1" />
                   Date
                 </label>
                 <input
                   type="date"
                   value={newLog.date}
                   onChange={(e) => setNewLog({ ...newLog, date: e.target.value })}
-                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  <Plane className="w-4 h-4 inline mr-2" />
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">
+                  <Plane className="w-3 h-3 inline mr-1" />
                   Aircraft N-Number
                 </label>
                 <input
@@ -298,13 +324,13 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   placeholder="N12345"
                   value={newLog.aircraftNNumber}
                   onChange={(e) => setNewLog({ ...newLog, aircraftNNumber: e.target.value })}
-                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  <Clock className="w-4 h-4 inline mr-2" />
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">
+                  <Clock className="w-3 h-3 inline mr-1" />
                   Flight Time (hours)
                 </label>
                 <input
@@ -313,12 +339,12 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   placeholder="1.5"
                   value={newLog.flightTime}
                   onChange={(e) => setNewLog({ ...newLog, flightTime: e.target.value })}
-                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white text-sm"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2">Flight Type</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">Flight Type</label>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {[
                     { key: 'night', label: 'Night' },
@@ -326,7 +352,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                     { key: 'solo', label: 'Solo' },
                     { key: 'dual', label: 'Dual' }
                   ].map((option) => (
-                    <label key={option.key} className="flex items-center gap-2 rounded-md border border-zinc-800 p-3 text-sm">
+                    <label key={option.key} className="flex items-center gap-2 rounded-md border border-zinc-800 p-3 text-[10px] font-black uppercase tracking-tighter">
                       <input
                         type="checkbox"
                         checked={newLog[option.key as keyof typeof newLog] as boolean}
@@ -339,8 +365,8 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2">
-                  <FileText className="w-4 h-4 inline mr-2" />
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">
+                  <FileText className="w-3 h-3 inline mr-1" />
                   Notes
                 </label>
                 <textarea
@@ -348,7 +374,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   value={newLog.notes}
                   onChange={(e) => setNewLog({ ...newLog, notes: e.target.value })}
                   rows={3}
-                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white text-sm"
                 />
               </div>
             </div>
@@ -356,13 +382,13 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
             <div className="flex justify-end space-x-3 mt-4">
               <button
                 onClick={() => setIsAdding(false)}
-                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-zinc-900 hover:bg-zinc-800 text-zinc-100"
+                className="px-4 py-2 rounded-md text-xs font-black uppercase tracking-widest transition-colors bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
               >
                 Cancel
               </button>
               <button
                 onClick={addFlightLog}
-                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-md text-sm font-medium transition-colors"
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-md text-xs font-black uppercase tracking-widest transition-colors"
               >
                 Save Flight Log
               </button>
@@ -371,25 +397,23 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
         )}
 
         {editingId && editLog && (
-          <div className="mb-6 p-4 rounded-lg border-2 border-yellow-500 bg-zinc-950/80">
-            <h4 className="font-medium mb-4 text-yellow-700 dark:text-yellow-300">Edit Flight Log</h4>
+          <div className="mb-6 p-4 rounded-lg border-2 border-red-900 bg-zinc-950/80">
+            <h4 className="font-black uppercase tracking-widest text-xs mb-4 text-red-500">Edit Flight Log</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  <Calendar className="w-4 h-4 inline mr-2" />
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">
                   Date
                 </label>
                 <input
                   type="date"
                   value={editLog.date}
                   onChange={(e) => setEditLog({ ...editLog, date: e.target.value })}
-                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  <Plane className="w-4 h-4 inline mr-2" />
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">
                   Aircraft N-Number
                 </label>
                 <input
@@ -397,13 +421,12 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   placeholder="N12345"
                   value={editLog.aircraftNNumber}
                   onChange={(e) => setEditLog({ ...editLog, aircraftNNumber: e.target.value })}
-                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  <Clock className="w-4 h-4 inline mr-2" />
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">
                   Flight Time (hours)
                 </label>
                 <input
@@ -412,12 +435,12 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   placeholder="1.5"
                   value={editLog.flightTime}
                   onChange={(e) => setEditLog({ ...editLog, flightTime: e.target.value })}
-                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white text-sm"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2">Flight Type</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">Flight Type</label>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {[
                     { key: 'night', label: 'Night' },
@@ -425,7 +448,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                     { key: 'solo', label: 'Solo' },
                     { key: 'dual', label: 'Dual' }
                   ].map((option) => (
-                    <label key={option.key} className="flex items-center gap-2 rounded-md border border-zinc-800 p-3 text-sm">
+                    <label key={option.key} className="flex items-center gap-2 rounded-md border border-zinc-800 p-3 text-[10px] font-black uppercase tracking-tighter">
                       <input
                         type="checkbox"
                         checked={Boolean(editLog[option.key as keyof FlightLog])}
@@ -438,8 +461,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2">
-                  <FileText className="w-4 h-4 inline mr-2" />
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-zinc-500">
                   Notes
                 </label>
                 <textarea
@@ -447,7 +469,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                   value={editLog.notes}
                   onChange={(e) => setEditLog({ ...editLog, notes: e.target.value })}
                   rows={3}
-                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white"
+                  className="w-full p-3 border rounded-md bg-black border-zinc-800 text-white text-sm"
                 />
               </div>
             </div>
@@ -455,15 +477,15 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
             <div className="flex justify-end space-x-3 mt-4">
               <button
                 onClick={cancelEdit}
-                className="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-zinc-900 hover:bg-zinc-800 text-zinc-100"
+                className="px-4 py-2 rounded-md text-xs font-black uppercase tracking-widest transition-colors bg-zinc-900 text-zinc-300"
               >
                 Cancel
               </button>
               <button
                 onClick={updateFlightLog}
-                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-md text-sm font-medium transition-colors"
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-md text-xs font-black uppercase tracking-widest transition-colors"
               >
-                Update Flight Log
+                Update
               </button>
             </div>
           </div>
@@ -498,7 +520,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                     <tr
                       key={log.id}
                       className={`border-t border-zinc-800 hover:bg-zinc-900/40 transition-colors ${
-                        editingId === log.id ? 'bg-yellow-900/10' : ''
+                        editingId === log.id ? 'bg-red-900/10' : ''
                       }`}
                     >
                       <td className="px-4 py-4 whitespace-nowrap text-zinc-300 font-mono">
@@ -515,6 +537,7 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
                           {log.night && <span className="text-[8px] font-black uppercase tracking-tighter bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">Night</span>}
                           {log.crossCountry && <span className="text-[8px] font-black uppercase tracking-tighter bg-red-950/30 px-1.5 py-0.5 rounded text-red-400">XC</span>}
                           {log.solo && <span className="text-[8px] font-black uppercase tracking-tighter bg-green-950/30 px-1.5 py-0.5 rounded text-green-400">Solo</span>}
+                          {log.dual && <span className="text-[8px] font-black uppercase tracking-tighter bg-blue-950/30 px-1.5 py-0.5 rounded text-blue-400">Dual</span>}
                         </div>
                       </td>
                       <td className="px-4 py-4 max-w-[120px]">
@@ -535,43 +558,39 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
         </div>
 
         {flightLogs.length > 0 && (
-          <div className="mt-6 p-4 bg-zinc-900 rounded-lg">
-            <h4 className="font-medium mb-2 text-white">Flight Summary</h4>
+          <div className="mt-6 p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
+            <h4 className="text-[10px] font-black uppercase tracking-widest mb-4 text-zinc-500">Logbook Statistics</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <div className="opacity-75 text-zinc-400">Total Flights</div>
-                <div className="font-bold text-lg text-white">{flightLogs.length}</div>
+              <div className="p-3 bg-black rounded border border-zinc-800">
+                <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Total Flights</div>
+                <div className="font-bold text-xl text-white">{flightLogs.length}</div>
               </div>
-              <div>
-                <div className="opacity-75 text-zinc-400">Total Hours</div>
-                <div className="font-bold text-lg text-white">{formatFlightTime(totalFlightTime)}</div>
+              <div className="p-3 bg-black rounded border border-zinc-800">
+                <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Total Hours</div>
+                <div className="font-bold text-xl text-red-500">{formatFlightTime(totalFlightTime)}</div>
               </div>
-              <div>
-                <div className="opacity-75 text-zinc-400">Average Flight</div>
-                <div className="font-bold text-lg text-white">{formatFlightTime(averageFlightTime)}</div>
+              <div className="p-3 bg-black rounded border border-zinc-800">
+                <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Average Duration</div>
+                <div className="font-bold text-xl text-white">{formatFlightTime(averageFlightTime)}</div>
               </div>
-              <div>
-                <div className="opacity-75 text-zinc-400">Aircraft Flown</div>
-                <div className="font-bold text-lg text-white">{uniqueAircraftCount}</div>
+              <div className="p-3 bg-black rounded border border-zinc-800">
+                <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Aircraft Count</div>
+                <div className="font-bold text-xl text-white">{uniqueAircraftCount}</div>
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <div className="opacity-75 text-zinc-400">Night Flights</div>
-                <div className="font-bold text-lg text-white">{nightFlightCount}</div>
-              </div>
-              <div>
-                <div className="opacity-75 text-zinc-400">Cross Country</div>
-                <div className="font-bold text-lg text-white">{crossCountryCount}</div>
-              </div>
-              <div>
-                <div className="opacity-75 text-zinc-400">Solo Flights</div>
-                <div className="font-bold text-lg text-white">{soloFlightCount}</div>
-              </div>
-              <div>
-                <div className="opacity-75 text-theme-secondary dark:text-theme-secondary-dark">Dual Flights</div>
-                <div className="font-bold text-lg text-theme-primary dark:text-theme-primary-dark">{dualFlightCount}</div>
-              </div>
+
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+               {[
+                { label: 'Night', val: nightFlightCount, color: 'text-zinc-400' },
+                { label: 'Cross Country', val: crossCountryCount, color: 'text-red-400' },
+                { label: 'Solo', val: soloFlightCount, color: 'text-green-400' },
+                { label: 'Dual Instruction', val: dualFlightCount, color: 'text-blue-400' }
+               ].map(stat => (
+                 <div key={stat.label} className="flex justify-between items-center p-2 border-b border-zinc-800">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">{stat.label}</span>
+                    <span className={`font-bold ${stat.color}`}>{stat.val}</span>
+                 </div>
+               ))}
             </div>
           </div>
         )}

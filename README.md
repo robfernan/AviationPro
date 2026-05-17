@@ -111,7 +111,6 @@ npx cap run android
 
 ### Phase 2: High-Fidelity Refinements
 - [ ] **Audio Briefings:** Utilize MIAD01 high-res audio hardware for text-to-speech METAR reports.
-- [ ] **Night Vision Mode:** System-wide "Deep Red" UI toggle for cockpit pre-flight use.
 - [ ] **Checklist Templates:** Pre-built templates for common training aircraft (C172, Archer).
 
 ---

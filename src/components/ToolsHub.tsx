@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { FileText, CheckSquare2 } from 'lucide-react';
+import { FileText, CheckSquare2, Plane } from 'lucide-react';
 import Briefing from './Briefing';
 import Checklists from './Checklists';
+import Hangar from './Hangar';
 
 interface ToolsHubProps {
   darkMode: boolean;
 }
 
 const ToolsHub: React.FC<ToolsHubProps> = ({ darkMode }) => {
-  const [activeTool, setActiveTool] = useState<'briefing' | 'checklists'>('briefing');
+  const [activeTool, setActiveTool] = useState<'briefing' | 'checklists' | 'hangar'>('briefing');
 
   const tools = [
     { id: 'briefing', label: 'Briefing', icon: FileText, component: Briefing },
-    { id: 'checklists', label: 'Checklists', icon: CheckSquare2, component: Checklists }
+    { id: 'checklists', label: 'Checklists', icon: CheckSquare2, component: Checklists },
+    { id: 'hangar', label: 'Hangar', icon: Plane, component: Hangar }
   ];
 
   const ActiveComponent = tools.find(t => t.id === activeTool)?.component || Briefing;
