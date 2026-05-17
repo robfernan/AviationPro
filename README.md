@@ -61,6 +61,12 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 
 ---
 
+## 🔒 Privacy & Reliability
+*   **100% Offline-First:** All math, calculators, and flight logs work without internet. Internet is only required for fetching live METAR/TAF data.
+*   **Data Sovereignty:** All personal flight logs and aircraft profiles are stored locally on your device. No cloud tracking, no data sharing.
+
+---
+
 ## 🔨 Deployment Workflow
 
 ### Prerequisites
@@ -82,12 +88,16 @@ npx cap run android
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Roadmap & Strategy
 - [x] **Desktop Release:** Stabilized frameless Wails application.
 - [x] **Mobile Port:** Fully responsive Android/iOS core via Capacitor.
 - [x] **Wear OS:** Zulu face with live weather complications.
 - [x] **Real-time Sync:** Phone-to-Watch data bridge for flight categories.
-- [ ] **Cross-Device Sync:** Optional cloud-relay for logbook backups.
+- [ ] **Unified Database:** Migrating all modules (Logs, Checklists) to a single Dexie/IndexedDB storage for easy backup.
+- [ ] **Integrated Workflow:** Connect W&B and Wind calculators directly to the Briefing Builder for one-tap planning.
+- [ ] **Hangar Profiles:** Save aircraft tail numbers with custom BEW and Arm data to eliminate repetitive entry.
+- [ ] **VFR Color-Coding:** Implementing standard 4-category color logic (VFR 🟢, MVFR 🔵, IFR 🔴, LIFR 🟣) for text-based alerts on the watch display.
+- [ ] **Aviation Conversions:** Dedicated unit conversion tool (Lbs <-> Gal, Celsius <-> Fahrenheit, Meters <-> Feet).
 
 ---
 
