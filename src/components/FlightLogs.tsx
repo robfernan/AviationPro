@@ -469,90 +469,69 @@ const FlightLogs: React.FC<FlightLogsProps> = ({ darkMode }) => {
           </div>
         )}
 
-        <div className="overflow-x-auto rounded-lg border border-zinc-800">
-          <table className="min-w-full text-sm">
-            <thead className="bg-zinc-900 text-white">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Date</th>
-                <th className="px-4 py-3 text-left font-semibold">Aircraft</th>
-                <th className="px-4 py-3 text-left font-semibold">Time</th>
-                <th className="px-4 py-3 text-left font-semibold">Type</th>
-                <th className="px-4 py-3 text-left font-semibold">Notes</th>
-                <th className="px-4 py-3 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLogs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center opacity-60">
-                    <FileText className="w-16 h-16 mx-auto mb-4" />
-                    <p className="text-lg">No flight logs found</p>
-                    <p className="text-sm">Try adjusting your search or add a new flight log</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredLogs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className={`border-t border-zinc-800 hover:bg-zinc-900/70 ${
-                      editingId === log.id ? 'bg-yellow-50/40 dark:bg-yellow-900/20' : ''
-                    }`}
-                  >
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-red-500" />
-                        {new Date(log.date).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Plane className="w-4 h-4 text-red-500" />
-                        <span className="font-medium">{log.aircraftNNumber}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-red-500" />
-                        <span className="font-medium">{log.flightTime} hrs</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {log.night && <span className="rounded-full bg-zinc-900 px-2 py-1 text-xs font-medium text-zinc-100">Night</span>}
-                        {log.crossCountry && <span className="rounded-full bg-red-700/20 px-2 py-1 text-xs font-medium text-red-300">XC</span>}
-                        {log.solo && <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">Solo</span>}
-                        {log.dual && <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Dual</span>}
-                        {!log.night && !log.crossCountry && !log.solo && !log.dual && <span className="text-zinc-500">None</span>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 max-w-md">
-                      <p className="truncate" title={log.notes}>
-                        {log.notes || 'No notes'}
-                      </p>
-                    </td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button
-                          onClick={() => startEditingLog(log)}
-                          className="text-red-500 hover:text-red-400 p-1 transition-colors"
-                          title="Edit flight log"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteFlightLog(log.id)}
-                          className="text-red-500 hover:text-red-700 p-1 transition-colors"
-                          title="Delete flight log"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 overflow-hidden">
+          {filteredLogs.length === 0 ? (
+            <div className="px-4 py-16 text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-zinc-900 border border-zinc-800 mb-6">
+                <FileText className="w-10 h-10 text-zinc-700" />
+              </div>
+              <h4 className="text-xl font-black uppercase tracking-widest text-white mb-2">No Records Found</h4>
+              <p className="text-xs text-zinc-500 max-w-[200px] mx-auto uppercase tracking-tighter leading-relaxed">
+                Sync failed or no entries exist. Initialize logbook via the <span className="text-red-500">+ Add Flight</span> action.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-zinc-900 text-[10px] font-black uppercase tracking-widest text-zinc-400 border-b border-zinc-800">
+                  <tr>
+                    <th className="px-4 py-4 text-left">Date</th>
+                    <th className="px-4 py-4 text-left">Aircraft</th>
+                    <th className="px-4 py-4 text-left">Time</th>
+                    <th className="px-4 py-4 text-left">Type</th>
+                    <th className="px-4 py-4 text-left">Notes</th>
+                    <th className="px-4 py-4 text-right">Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {filteredLogs.map((log) => (
+                    <tr
+                      key={log.id}
+                      className={`border-t border-zinc-800 hover:bg-zinc-900/40 transition-colors ${
+                        editingId === log.id ? 'bg-yellow-900/10' : ''
+                      }`}
+                    >
+                      <td className="px-4 py-4 whitespace-nowrap text-zinc-300 font-mono">
+                        {new Date(log.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="font-black text-white tracking-widest">{log.aircraftNNumber}</span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="font-bold text-red-500">{log.flightTime} HR</span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {log.night && <span className="text-[8px] font-black uppercase tracking-tighter bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">Night</span>}
+                          {log.crossCountry && <span className="text-[8px] font-black uppercase tracking-tighter bg-red-950/30 px-1.5 py-0.5 rounded text-red-400">XC</span>}
+                          {log.solo && <span className="text-[8px] font-black uppercase tracking-tighter bg-green-950/30 px-1.5 py-0.5 rounded text-green-400">Solo</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 max-w-[120px]">
+                        <p className="truncate text-zinc-500 text-xs italic">{log.notes || '---'}</p>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => startEditingLog(log)} className="text-zinc-600 hover:text-white"><Edit2 size={14}/></button>
+                          <button onClick={() => deleteFlightLog(log.id)} className="text-zinc-600 hover:text-red-500"><Trash2 size={14}/></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {flightLogs.length > 0 && (
