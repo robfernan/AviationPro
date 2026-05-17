@@ -8,16 +8,28 @@
 
 **Aviation Pro** is a professional-grade pilot utility suite built for precision and visibility. Engineered with a **Unified UI Architecture**, it delivers a seamless experience across frameless desktop environments (Wails), native mobile EFBs (Capacitor), and the pilot's wrist (Wear OS).
 
-> **Current Status:** 🚀 **Beta v1.0.0 Ready**. Now fully functional on Windows Desktop, Android Mobile (MIAD01 Optimized), and Wear OS (Pixel Watch).
+> **Current Status:** 🚀 **Beta v1.0.0 Ready**. Now fully functional on Windows Desktop, Android Mobile (MIAD01 Optimized), and Wear OS (Pixel Watch 1/2/3).
 
 ---
 
 ## 🖼️ The Multi-Platform Ecosystem
 
-| **Desktop (Wails)** | **Mobile (Capacitor)** | **Watch (Wear OS)** |
-| :--- | :--- | :--- |
-| ![Desktop View](assets/screenshots/hero_desktop.png) | ![Mobile View](assets/screenshots/hero_mobile.png) | ![Watch View](assets/screenshots/hero_watch.png) |
-| *Hardware-style frameless canvas.* | *Responsive, touch-ready EFB.* | *Live Sync Pilot Suite.* |
+| **Desktop (Wails)** | **Mobile (Capacitor)** | **Watch App (Wear OS)** | **Watch Face (WFF)** |
+| :--- | :--- | :--- | :--- |
+| ![Desktop View](assets/screenshots/hero_desktop.png) | ![Mobile View](assets/screenshots/hero_mobile.png) | ![Watch App](assets/screenshots/hero_watch_app.png) | ![Watch Face](assets/screenshots/hero_watch_face.png) |
+| *Hardware-style frameless canvas.* | *Responsive, touch-ready EFB.* | *Live Sync METAR Monitor.* | *Zulu-first Aviator Face.* |
+
+---
+
+## 💰 The Value Proposition
+Aviation Pro is designed to disrupt the "Subscription-Heavy" aviation market. While industry standards cost hundreds per year, AVPRO provides a high-end, unified experience for a fraction of the cost.
+
+| Feature | **AVPRO** | **E6BX (App)** | **LogTen Pro** | **ForeFlight** |
+| :--- | :--- | :--- | :--- | :--- |
+| **Cost** | **$0.99 (One-time)** | Outdated / Varies | $79 - $349 / yr | $99 - $360 / yr |
+| **Architecture** | **Modern / Native** | Legacy / Older Android | Subscription | Subscription |
+| **Watch Integration** | **Included (Face + App)** | None | Limited | iOS Only |
+| **Privacy** | **Local-First** | Ad-Supported (Web) | Cloud-Based | Cloud-Based |
 
 ---
 
@@ -45,10 +57,10 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 *   **Dynamic CG Envelope:** Visual loading charts for standard trainer fleets (C172, Archer, etc.).
 *   **Safety Interlocks:** Real-time visual alerts for out-of-envelope configurations.
 
-### ⌚ Wear OS Companion
-*   **Zulu-First Watch Face:** High-contrast digital UTC clock for rapid mission timing.
-*   **Live Data App:** A built-in watch app that displays METAR flight categories (VFR/IFR) synced instantly from the MIAD01 phone via the **Wearable Data Layer**.
-*   **Watch Face Complications:** Support for "SmallBox" complications to see weather data on any watch face.
+### ⌚ Wear OS Suite (Pixel Watch Optimized)
+*   **Aviator Watch Face:** Custom "Watch Face Format" (WFF) design with dedicated Zulu and Local time readouts.
+*   **Live Data App:** A dedicated monitor showing METAR flight categories (VFR/IFR) synced instantly from the phone via the **Wearable Data Layer**.
+*   **Complications:** "SmallBox" support to bring AVPRO weather to any watch face.
 
 ---
 
@@ -96,7 +108,6 @@ npx cap run android
 - [ ] **Unified Database:** Migrating all modules (Logs, Checklists) to a single Dexie/IndexedDB storage for easy backup.
 - [ ] **Integrated Workflow:** Connect W&B and Wind calculators directly to the Briefing Builder for one-tap planning.
 - [ ] **Hangar Profiles:** Save aircraft tail numbers with custom BEW and Arm data to eliminate repetitive entry.
-- [ ] **VFR Color-Coding:** Implementing standard 4-category color logic (VFR 🟢, MVFR 🔵, IFR 🔴, LIFR 🟣) for text-based alerts on the watch display.
 - [ ] **Aviation Conversions:** Dedicated unit conversion tool (Lbs <-> Gal, Celsius <-> Fahrenheit, Meters <-> Feet).
 
 ---
