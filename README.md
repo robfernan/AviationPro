@@ -21,8 +21,12 @@
 
 ---
 
-## 💰 The Value Proposition
+## 💰 The Value Proposition & Philosophy
 Aviation Pro is designed to disrupt the "Subscription-Heavy" aviation market. While industry standards cost hundreds per year, AVPRO provides a high-end, unified experience for a fraction of the cost.
+
+**AVPRO is Open Source and free on Desktop and Web.** The mobile port (Android/Wear OS) is a one-time purchase of **$0.99** to cover publishing costs and maintenance.
+
+> **One-Time Purchase Policy:** We believe aviation tools should be like classic games: pay once, own it forever. Subscriptions are only worth it when you are renting massive cloud databases—for a pilot's personal utility suite, local data sovereignty is king.
 
 | Feature | **AVPRO** | **E6BX (App)** | **LogTen Pro** | **ForeFlight** |
 | :--- | :--- | :--- | :--- | :--- |
@@ -30,6 +34,49 @@ Aviation Pro is designed to disrupt the "Subscription-Heavy" aviation market. Wh
 | **Architecture** | **Modern / Native** | Legacy / Older Android | Subscription | Subscription |
 | **Watch Integration** | **Included (Face + App)** | None | Limited | iOS Only |
 | **Privacy** | **Local-First** | Ad-Supported (Web) | Cloud-Based | Cloud-Based |
+
+---
+
+## ⚙️ Installation & Setup
+
+### Prerequisites
+*   **Node.js (v18+)** & **NPM**
+*   **Go (1.21+)** (For Desktop Wails)
+*   **Android Studio** (For Mobile/Watch builds)
+*   **Wails CLI** (`go install github.com/wailsapp/wails/v2/cmd/wails@latest`)
+
+### 🌐 Web Deployment (Local Preview)
+To run the core flight planning logic in your browser:
+```bash
+# Install dependencies
+npm install
+
+# Run Vite dev server
+npm run dev
+```
+
+### 💻 Desktop Deployment (Wails)
+To launch the frameless desktop canvas:
+```bash
+# Navigate to the wails platform folder
+cd platforms/desktop/wails
+
+# Run in development mode
+wails dev
+```
+
+### 📱 Mobile & Watch Deployment (Capacitor)
+Both the phone and watch apps use a unified ID (`com.aviationpro.wear.face`) for local sync.
+```bash
+# 1. Build the web assets
+npm run build
+
+# 2. Sync assets to the Android project
+npx cap copy android
+
+# 3. Open in Android Studio to deploy to MIAD01 / Pixel Watch
+npx cap open android
+```
 
 ---
 
@@ -80,32 +127,8 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 
 ---
 
-## 🔨 Deployment Workflow
-
-### Desktop (Wails)
-```bash
-# Run in development mode
-wails dev
-
-# Build production binary
-wails build
-```
-
-### Mobile/Watch Sync (Capacitor)
-```bash
-# Build the web assets
-npm run build
-
-# Sync to Android project
-npx cap copy android
-
-# Run on MIAD01 Phone / Pixel Watch
-npx cap run android
-```
-
----
-
 ## 🗺️ Roadmap & Strategy
+
 ### Phase 1: Core Preflight Engine (Complete)
 - [x] **Unified Local Database:** Migrated all modules (Logs, Checklists) to a single Dexie/IndexedDB storage.
 - [x] **Hangar Profiles:** Save aircraft tail numbers with custom BEW and Arm data to eliminate repetitive entry.
@@ -117,6 +140,12 @@ npx cap run android
 - [ ] **Audio Briefings:** Utilize MIAD01 high-res audio hardware for text-to-speech METAR reports.
 - [ ] **Night Vision Mode:** System-wide "Deep Red" UI toggle for cockpit pre-flight use.
 - [ ] **Checklist Templates:** Pre-built templates for common training aircraft (C172, Archer).
+- [ ] **Offline Weather Snapshot:** Automatic local caching of the last 4 hours of weather data to survive signal drops.
+
+### Phase 3: Community & Safety (Strategy)
+- [ ] **Data Export/Import:** Seamless .json backup for entire pilot hangar and logbook.
+- [ ] **Open-Source Math Validation:** Community-verified calculator logic to ensure POH accuracy.
+- [ ] **Glove-Friendly UI Mode:** Toggle for extra-large touch targets on mobile for heavy turbulence use.
 
 ---
 
