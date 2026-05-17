@@ -82,12 +82,16 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 
 ## 🔨 Deployment Workflow
 
-### Prerequisites
-- **Go** 1.20+ & **Wails CLI**
-- **Node.js** & **NPM**
-- **Android Studio** (for Mobile/Watch builds)
+### Desktop (Wails)
+```bash
+# Run in development mode
+wails dev
 
-### Mobile/Watch Sync
+# Build production binary
+wails build
+```
+
+### Mobile/Watch Sync (Capacitor)
 ```bash
 # Build the web assets
 npm run build
@@ -102,15 +106,16 @@ npx cap run android
 ---
 
 ## 🗺️ Roadmap & Strategy
-### Phase 1: Core Preflight Engine
-- [ ] **Unified Local Database:** Migrate all modules (Logs, Checklists) to a single Dexie/IndexedDB storage for 100% offline reliability and easy backup.
-- [ ] **Hangar Profiles:** Save aircraft tail numbers with custom BEW and Arm data to eliminate repetitive entry.
-- [ ] **Integrated Planning:** Connect W&B and Wind calculators directly to the Briefing Builder for one-tap planning.
-- [ ] **Aviation Conversions:** Dedicated unit conversion tool (Lbs <-> Gal, Celsius <-> Fahrenheit, Meters <-> Feet).
-- [ ] **VFR Color-Coding:** Full 4-category logic (VFR 🟢, MVFR 🔵, IFR 🔴, LIFR 🟣) for visual text alerts on the watch app.
+### Phase 1: Core Preflight Engine (Complete)
+- [x] **Unified Local Database:** Migrated all modules (Logs, Checklists) to a single Dexie/IndexedDB storage.
+- [x] **Hangar Profiles:** Save aircraft tail numbers with custom BEW and Arm data to eliminate repetitive entry.
+- [x] **Integrated Planning:** Connect W&B and Wind calculators directly to the Briefing Builder for one-tap planning.
+- [x] **Aviation Conversions:** Dedicated unit conversion tool (Lbs <-> Gal, Celsius <-> Fahrenheit, Meters <-> Feet).
+- [x] **VFR Color-Coding:** Full 4-category logic (VFR 🟢, MVFR 🔵, IFR 🔴, LIFR 🟣) for visual text alerts on the watch app.
 
 ### Phase 2: High-Fidelity Refinements
 - [ ] **Audio Briefings:** Utilize MIAD01 high-res audio hardware for text-to-speech METAR reports.
+- [ ] **Night Vision Mode:** System-wide "Deep Red" UI toggle for cockpit pre-flight use.
 - [ ] **Checklist Templates:** Pre-built templates for common training aircraft (C172, Archer).
 
 ---
