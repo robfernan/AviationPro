@@ -1,4 +1,4 @@
-package com.aviationpro.wear.tile
+package com.aviationpro.wear.face.tile
 
 import android.content.Context
 import androidx.wear.protolayout.ResourceBuilders.Resources
@@ -16,7 +16,7 @@ import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.tooling.preview.Preview
 import androidx.wear.tiles.tooling.preview.TilePreviewData
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.aviationpro.wear.R
+import com.aviationpro.wear.face.R
 import com.google.common.util.concurrent.ListenableFuture
 
 private const val RESOURCES_VERSION = "0"
@@ -26,10 +26,10 @@ class MainTileService : TileService() {
         Futures.immediateFuture(tile(requestParams, this))
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
-        Futures.immediateFuture(resources(requestParams))
+        Futures.immediateFuture(resources())
 }
 
-private fun resources(requestParams: ResourcesRequest): Resources {
+private fun resources(requestParams: ResourcesRequest? = null): Resources {
     return Resources.Builder()
         .setVersion(RESOURCES_VERSION)
         .build()
@@ -48,7 +48,7 @@ private fun tile(
                         mainSlot = {
                             text(
                                 context.getString(R.string.hello_world, "Tile").layoutString,
-                                typography = BODY_LARGE
+                                typography = BODY_LARGE,
                             )
                         }
                     )

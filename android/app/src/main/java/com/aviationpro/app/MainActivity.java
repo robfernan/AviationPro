@@ -1,6 +1,7 @@
 package com.aviationpro.app;
 
 import android.os.Bundle;
+import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
@@ -10,6 +11,8 @@ import android.webkit.JavascriptInterface;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Install the splash screen before calling super.onCreate()
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
     }
 

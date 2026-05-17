@@ -1,4 +1,4 @@
-package com.aviationpro.wear.presentation
+package com.aviationpro.wear.face.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxSize().background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "AVPRO Service Active", color = Color.Gray)
+                Text(text = "AVPRO Service Active", color = Color.White)
             }
         }
     }

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.aviationpro.wear'
+    namespace 'com.aviationpro.wear.face'
     compileSdk = rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "com.aviationpro.wear"
+        applicationId "com.aviationpro.wear.face"
         minSdk 30
         targetSdk = rootProject.ext.targetSdkVersion
         versionCode 1

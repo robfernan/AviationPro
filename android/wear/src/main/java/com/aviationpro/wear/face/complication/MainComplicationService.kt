@@ -1,4 +1,4 @@
-package com.aviationpro.wear.complication
+package com.aviationpro.wear.face.complication
 
 import android.util.Log
 import androidx.wear.watchface.complications.data.ComplicationData
