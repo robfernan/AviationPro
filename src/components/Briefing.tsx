@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { FileText, Download, Loader2, AlertCircle, RefreshCw, Plane } from 'lucide-react';
 import { generateBriefingPDF } from '../utils/briefingBuilder';
 import { fetchAirportWeather } from '../utils/weatherService';
+import { db } from '../services/PersistenceService';
+import { Aircraft } from '../types/aviation';
 
 interface BriefingComponentProps {
   darkMode: boolean;
 }
 
 const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
+  const [hangar, setHangar] = useState<Aircraft[]>([]);
+
   const [briefingData, setBriefingData] = useState({
     date: new Date().toISOString().split('T')[0],
     departureAirport: '',
@@ -33,6 +37,15 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
 
   const [loading, setLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
+
+  // Load hangar on mount
+  useEffect(() => {
+    const loadHangar = async () => {
+      const planes = await db.getAllAircraft();
+      setHangar(planes);
+    };
+    loadHangar();
+  }, []);
 
   const handleSyncLatest = () => {
     const latestWind = localStorage.getItem('latest_wind_result');
@@ -63,6 +76,17 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
 
       return updated;
     });
+    alert("Synced latest calculator data to briefing form.");
+  };
+
+  const applyAircraftToBriefing = (planeId: string) => {
+    const plane = hangar.find(p => String(p.id) === planeId);
+    if (plane) {
+      setBriefingData(prev => ({
+        ...prev,
+        aircraft: plane.tailNumber
+      }));
+    }
   };
 
   const fetchWeatherData = async (icao: string) => {
@@ -256,13 +280,27 @@ const Briefing: React.FC<BriefingComponentProps> = ({ darkMode }) => {
               <label className="block text-[10px] font-black uppercase tracking-widest mb-1 text-zinc-500">
                 N-Number
               </label>
-              <input
-                type="text"
-                placeholder="N12345"
-                value={briefingData.nNumber}
-                onChange={(e) => setBriefingData({ ...briefingData, nNumber: e.target.value.toUpperCase() })}
-                className={inputClass}
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="N12345"
+                  value={briefingData.nNumber}
+                  onChange={(e) => setBriefingData({ ...briefingData, nNumber: e.target.value.toUpperCase() })}
+                  className="flex-1 bg-black text-white border border-zinc-800 rounded px-3 py-2 text-sm uppercase font-mono"
+                />
+                {hangar.length > 0 && (
+                  <select
+                    onChange={(e) => applyAircraftToBriefing(e.target.value)}
+                    className="bg-zinc-800 border border-zinc-700 rounded text-zinc-400 text-[10px] font-black w-24 uppercase"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>FLEET</option>
+                    {hangar.map(p => (
+                      <option key={p.id} value={String(p.id)}>{p.tailNumber}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
           </div>
         </div>
