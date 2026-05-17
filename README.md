@@ -73,9 +73,10 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 
 ---
 
-## 🔒 Privacy & Reliability
+## 🔒 Privacy & Data Sovereignty
 *   **100% Offline-First:** All math, calculators, and flight logs work without internet. Internet is only required for fetching live METAR/TAF data.
-*   **Data Sovereignty:** All personal flight logs and aircraft profiles are stored locally on your device. No cloud tracking, no data sharing.
+*   **Zero-Cloud Architecture:** All personal flight logs, aircraft profiles, and planning data are stored locally on your device. No servers, no tracking, no data sharing. 
+*   **Data Portability:** Export your entire hangar and logbook to a single file for local backup and multi-device transfer.
 
 ---
 
@@ -101,14 +102,17 @@ npx cap run android
 ---
 
 ## 🗺️ Roadmap & Strategy
-- [x] **Desktop Release:** Stabilized frameless Wails application.
-- [x] **Mobile Port:** Fully responsive Android/iOS core via Capacitor.
-- [x] **Wear OS:** Zulu face with live weather complications.
-- [x] **Real-time Sync:** Phone-to-Watch data bridge for flight categories.
-- [ ] **Unified Database:** Migrating all modules (Logs, Checklists) to a single Dexie/IndexedDB storage for easy backup.
-- [ ] **Integrated Workflow:** Connect W&B and Wind calculators directly to the Briefing Builder for one-tap planning.
+### Phase 1: Core Preflight Engine
+- [ ] **Unified Local Database:** Migrate all modules (Logs, Checklists) to a single Dexie/IndexedDB storage for 100% offline reliability and easy backup.
 - [ ] **Hangar Profiles:** Save aircraft tail numbers with custom BEW and Arm data to eliminate repetitive entry.
+- [ ] **Integrated Planning:** Connect W&B and Wind calculators directly to the Briefing Builder for one-tap planning.
 - [ ] **Aviation Conversions:** Dedicated unit conversion tool (Lbs <-> Gal, Celsius <-> Fahrenheit, Meters <-> Feet).
+- [ ] **VFR Color-Coding:** Full 4-category logic (VFR 🟢, MVFR 🔵, IFR 🔴, LIFR 🟣) for visual text alerts on the watch app.
+
+### Phase 2: High-Fidelity Refinements
+- [ ] **Audio Briefings:** Utilize MIAD01 high-res audio hardware for text-to-speech METAR reports.
+- [ ] **Night Vision Mode:** System-wide "Deep Red" UI toggle for cockpit pre-flight use.
+- [ ] **Checklist Templates:** Pre-built templates for common training aircraft (C172, Archer).
 
 ---
 
