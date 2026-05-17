@@ -17,7 +17,7 @@
 | **Desktop (Wails)** | **Mobile (Capacitor)** | **Watch (Wear OS)** |
 | :--- | :--- | :--- |
 | ![Desktop View](assets/screenshots/hero_desktop.png) | ![Mobile View](assets/screenshots/hero_mobile.png) | ![Watch View](assets/screenshots/hero_watch.png) |
-| *Hardware-style frameless canvas.* | *Responsive, touch-ready EFB.* | *Zulu-first Aviator Face.* |
+| *Hardware-style frameless canvas.* | *Responsive, touch-ready EFB.* | *Live Sync Pilot Suite.* |
 
 ---
 
@@ -46,9 +46,9 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 *   **Safety Interlocks:** Real-time visual alerts for out-of-envelope configurations.
 
 ### ⌚ Wear OS Companion
-*   **Zulu-First Design:** High-contrast digital UTC clock for rapid mission timing.
-*   **Live Data Bridge:** The watch app acts as a dedicated live display for METAR categories (VFR/IFR) synced directly from the phone.
-*   **Watch Face Complications:** Support for "SmallBox" complications to see flight data on any watch face.
+*   **Zulu-First Watch Face:** High-contrast digital UTC clock for rapid mission timing.
+*   **Live Data App:** A built-in watch app that displays METAR flight categories (VFR/IFR) synced instantly from the MIAD01 phone.
+*   **Watch Face Complications:** Support for "SmallBox" complications to see weather data on any watch face.
 
 ---
 
