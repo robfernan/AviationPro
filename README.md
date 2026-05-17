@@ -138,14 +138,12 @@ Led by a creative professional, the AVPRO interface mimics real glass cockpit av
 
 ### Phase 2: High-Fidelity Refinements
 - [ ] **Audio Briefings:** Utilize MIAD01 high-res audio hardware for text-to-speech METAR reports.
-- [ ] **Night Vision Mode:** System-wide "Deep Red" UI toggle for cockpit pre-flight use.
 - [ ] **Checklist Templates:** Pre-built templates for common training aircraft (C172, Archer).
 - [ ] **Offline Weather Snapshot:** Automatic local caching of the last 4 hours of weather data to survive signal drops.
 
 ### Phase 3: Community & Safety (Strategy)
 - [ ] **Data Export/Import:** Seamless .json backup for entire pilot hangar and logbook.
 - [ ] **Open-Source Math Validation:** Community-verified calculator logic to ensure POH accuracy.
-- [ ] **Glove-Friendly UI Mode:** Toggle for extra-large touch targets on mobile for heavy turbulence use.
 
 ---
 
