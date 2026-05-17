@@ -19,14 +19,17 @@ class MainComplicationService : SuspendingComplicationDataSourceService() {
     }
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData {
-        var category = "???"
+        var category = "N/A"
+        Log.d("AVPRO", "Complication request received")
 
         try {
-            // Fetch the latest category sent from the phone
-            val dataItems = Wearable.getDataClient(this).dataItems.await()
+            val dataClient = Wearable.getDataClient(this)
+            val dataItems = dataClient.dataItems.await()
+            Log.d("AVPRO", "Found ${dataItems.count} data items")
             for (item in dataItems) {
                 if (item.uri.path == "/weather") {
                     category = DataMapItem.fromDataItem(item).dataMap.getString("category", "VFR")
+                    Log.d("AVPRO", "Found weather category: $category")
                 }
             }
         } catch (e: Exception) {
