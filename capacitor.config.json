@@ -1,5 +1,5 @@
 {
-  "appId": "com.aviationpro.app",
+  "appId": "com.aviationpro.wear.face",
   "appName": "AviationPro",
   "webDir": "dist",
   "server": {
