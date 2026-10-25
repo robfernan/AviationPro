@@ -1,24 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <!-- Dark Tactical Rounded Background -->
-  <rect width="64" height="64" rx="14" fill="#09090b" stroke="#27272a" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Bright Solid High-Contrast Background -->
+  <rect width="64" height="64" rx="14" fill="#dc2626"/>
   
-  <!-- Outer Compass Ring -->
-  <circle cx="32" cy="32" r="23" stroke="#ef4444" stroke-width="1.75" stroke-dasharray="3 2" opacity="0.8"/>
-  <circle cx="32" cy="32" r="20" stroke="#3f3f46" stroke-width="1"/>
+  <!-- Outer Gauge Ring -->
+  <circle cx="32" cy="32" r="25" fill="#09090b" stroke="#ffffff" stroke-width="2"/>
   
-  <!-- Cardinal Tick Marks -->
-  <line x1="32" y1="9" x2="32" y2="13" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="32" y1="51" x2="32" y2="55" stroke="#71717a" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="9" y1="32" x2="13" y2="32" stroke="#71717a" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="51" y1="32" x2="55" y2="32" stroke="#71717a" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Cardinal Index Ticks -->
+  <line x1="32" y1="8" x2="32" y2="15" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="32" y1="49" x2="32" y2="56" stroke="#71717a" stroke-width="2" stroke-linecap="round"/>
+  <line x1="8" y1="32" x2="15" y2="32" stroke="#71717a" stroke-width="2" stroke-linecap="round"/>
+  <line x1="49" y1="32" x2="56" y2="32" stroke="#71717a" stroke-width="2" stroke-linecap="round"/>
 
-  <!-- Tactical Jet Silhouette (Pointing North) -->
-  <path d="M32 14L35 24L48 31V35L35 32L34 43L39 47V50L32 48L25 50V47L30 43L29 32L16 35V31L29 24Z" 
-        fill="#f43f5e" 
-        stroke="#ffffff" 
-        stroke-width="1" 
-        stroke-linejoin="round"/>
+  <!-- Bold White Jet Airplane (High Visibility at 16x16) -->
+  <path d="M32 14 L36 26 L50 33 L50 37 L36 34 L35 44 L40 48 L40 51 L32 49 L24 51 L24 48 L29 44 L28 34 L14 37 L14 33 L28 26 Z" fill="#ffffff" stroke="#000000" stroke-width="1" stroke-linejoin="round"/>
   
-  <!-- Navigation Hub Dot -->
-  <circle cx="32" cy="32" r="2" fill="#ffffff"/>
+  <!-- Center Instrument Radar Target -->
+  <circle cx="32" cy="33" r="2.5" fill="#ef4444"/>
 </svg>
