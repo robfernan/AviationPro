@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { FileText, Download, Loader2, AlertCircle, RefreshCw, Plane } from 'lucide-react';
 import { generateBriefingPDF } from '../utils/briefingBuilder';
+import { downloadForeFlightFPL } from '../utils/fplExport';
+import { Share2 } from 'lucide-react';
 import { fetchAirportWeather } from '../utils/weatherService';
 import { db } from '../services/PersistenceService';
 import { Aircraft } from '../types/aviation';
