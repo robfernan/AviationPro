@@ -1,19 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <!-- Bright Solid High-Contrast Background -->
-  <rect width="64" height="64" rx="14" fill="#dc2626"/>
-  
-  <!-- Outer Gauge Ring -->
-  <circle cx="32" cy="32" r="25" fill="#09090b" stroke="#ffffff" stroke-width="2"/>
-  
-  <!-- Cardinal Index Ticks -->
-  <line x1="32" y1="8" x2="32" y2="15" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-  <line x1="32" y1="49" x2="32" y2="56" stroke="#71717a" stroke-width="2" stroke-linecap="round"/>
-  <line x1="8" y1="32" x2="15" y2="32" stroke="#71717a" stroke-width="2" stroke-linecap="round"/>
-  <line x1="49" y1="32" x2="56" y2="32" stroke="#71717a" stroke-width="2" stroke-linecap="round"/>
+  <defs>
+    <!-- Vibrant Aviation Crimson/Rose Gradient -->
+    <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
 
-  <!-- Bold White Jet Airplane (High Visibility at 16x16) -->
-  <path d="M32 14 L36 26 L50 33 L50 37 L36 34 L35 44 L40 48 L40 51 L32 49 L24 51 L24 48 L29 44 L28 34 L14 37 L14 33 L28 26 Z" fill="#ffffff" stroke="#000000" stroke-width="1" stroke-linejoin="round"/>
-  
-  <!-- Center Instrument Radar Target -->
-  <circle cx="32" cy="33" r="2.5" fill="#ef4444"/>
+  <!-- High-Visibility Dark Base Card -->
+  <rect width="64" height="64" rx="14" fill="#09090b" stroke="#27272a" stroke-width="2"/>
+
+  <!-- Radar Concentric Range Rings -->
+  <circle cx="32" cy="27" r="22" fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="2 3" opacity="0.4"/>
+  <circle cx="32" cy="27" r="14" fill="none" stroke="#71717a" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- Prominent Airport / Place Pin Location Marker -->
+  <path d="M32 6 C20 6 11 15 11 27 C11 41 32 60 32 60 C32 60 53 41 53 27 C53 15 44 6 32 6 Z" 
+        fill="url(#pinGrad)" 
+        stroke="#ffffff" 
+        stroke-width="1.75" 
+        filter="url(#shadow)"/>
+
+  <!-- Inner Pin Dial (High-Contrast White Disc) -->
+  <circle cx="32" cy="26" r="11" fill="#ffffff" stroke="#991b1b" stroke-width="1.25"/>
+
+  <!-- Crisp Supersonic Airplane Silhouette at the Pin Center -->
+  <path d="M32 17 L34.5 23 L41 27 L41 29 L34.5 27.5 L34 32.5 L36.5 35 L36.5 36.5 L32 35.5 L27.5 36.5 L27.5 35 L30 32.5 L29.5 27.5 L23 29 L23 27 L29.5 23 Z" 
+        fill="#b91c1c" 
+        stroke="#7f1d1d" 
+        stroke-width="0.5"/>
 </svg>
