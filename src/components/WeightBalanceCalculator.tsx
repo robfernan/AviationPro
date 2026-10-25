@@ -21,7 +21,7 @@ import {
 import { db } from '../services/PersistenceService';
 import { Aircraft } from '../types/aviation';
 import sampleAircrafts from '../data/sampleAircrafts.json';
-import cgEnvelopeImage from '../../assets/centerofgravitycessna172.png';
+import { CGEnvelope } from './CGEnvelope';
 
 /**
  * AVIATIONPRO // MODULE_0x4FB2: STRATEGIC_WEIGHT_BALANCE_CALCULATOR
@@ -635,22 +635,15 @@ const WeightBalanceCalculator: React.FC<{ darkMode: boolean }> = () => {
                 </div>
               </div>
 
-                <div className="lg:col-span-4 bg-[#18181b] border border-[#27272a] p-4 sm:p-6 flex flex-col justify-end group relative overflow-hidden min-h-[360px] sm:min-h-[420px]">
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/35 to-black/80 z-0"></div>
-                  <img
-                   src={cgEnvelopeImage}
-                   alt="Cessna 172 center of gravity envelope"
-                   className="absolute inset-0 h-full w-full object-contain p-3 sm:p-6 opacity-85 z-0"
-                 />
-                  <div className="relative z-10 flex flex-col items-center justify-end gap-3 h-full">
-                    <div className="w-full max-w-[560px] rounded-md border border-zinc-800 bg-black/70 px-4 py-3 backdrop-blur-sm">
-                     <div className="flex justify-between w-full text-[8px] font-black uppercase tracking-widest text-zinc-300">
-                      <span>FWD: {limits.forwardCG}"</span>
-                      <span>CURR: {results.rampCG.toFixed(2)}"</span>
-                      <span>AFT: {limits.aftCG}"</span>
-                     </div>
-                    </div>
-                  </div>
+                <div className="lg:col-span-4 bg-[#18181b] border border-[#27272a] p-2 flex flex-col justify-between group relative overflow-hidden min-h-[380px]">
+                  <CGEnvelope 
+                    cg={results.rampCG} 
+                    weight={results.rampW} 
+                    takeoffCG={results.takeoffCG} 
+                    takeoffWeight={results.takeoffW} 
+                    landingCG={results.landingCG} 
+                    landingWeight={results.landingW} 
+                  />
                 </div>
             </footer>
 
