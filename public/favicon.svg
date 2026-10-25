@@ -1,7 +1,24 @@
-<svg enable-background="new" version="1.1" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
- <g transform="translate(-113 140.35)" opacity=".99">
-  <text x="13.86202" y="253.8631" fill="#000000" font-family="Raleway" font-size="5.3333px" font-weight="300" letter-spacing="0px" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="13.86202" y="258.80008"/></text>
- </g>
- <path d="m150 0.10031a150 150 0 0 0-4.3691 0.1543v22.15l-12.012-3.3145 16.535 25.4s9.8754-16.508 16.508-25.416l-12.061 3.2578v-22.002a150 150 0 0 0-4.6016-0.23047z" enable-background="new" fill="#fff" stroke-width=".79929"/>
- <path d="m150 53.583v219.9" fill="#00f" opacity=".899" stroke="#fff" stroke-width=".88389"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Dark Tactical Rounded Background -->
+  <rect width="64" height="64" rx="14" fill="#09090b" stroke="#27272a" stroke-width="2"/>
+  
+  <!-- Outer Compass Ring -->
+  <circle cx="32" cy="32" r="23" stroke="#ef4444" stroke-width="1.75" stroke-dasharray="3 2" opacity="0.8"/>
+  <circle cx="32" cy="32" r="20" stroke="#3f3f46" stroke-width="1"/>
+  
+  <!-- Cardinal Tick Marks -->
+  <line x1="32" y1="9" x2="32" y2="13" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="32" y1="51" x2="32" y2="55" stroke="#71717a" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="9" y1="32" x2="13" y2="32" stroke="#71717a" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="51" y1="32" x2="55" y2="32" stroke="#71717a" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Tactical Jet Silhouette (Pointing North) -->
+  <path d="M32 14L35 24L48 31V35L35 32L34 43L39 47V50L32 48L25 50V47L30 43L29 32L16 35V31L29 24Z" 
+        fill="#f43f5e" 
+        stroke="#ffffff" 
+        stroke-width="1" 
+        stroke-linejoin="round"/>
+  
+  <!-- Navigation Hub Dot -->
+  <circle cx="32" cy="32" r="2" fill="#ffffff"/>
 </svg>
