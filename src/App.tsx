@@ -6,6 +6,7 @@ import CX6Calculator from './components/CX6Calculator';
 import WeatherCalculator from './components/WeatherCalculator';
 import FlightLogs from './components/FlightLogs';
 import ToolsHub from './components/ToolsHub';
+import AviationTelemetryRibbon from './components/AviationTelemetryRibbon';
 
 const runtime = (typeof window !== 'undefined' ? (window as any).runtime : null);
 const isDesktop = !!runtime;
@@ -54,6 +55,9 @@ const App: React.FC = () => {
           )}
         </div>
       </nav>
+
+      {/* 📡 EDITORIAL LIVE NOAA TELEMETRY RIBBON */}
+      <AviationTelemetryRibbon onSelectWeatherTab={() => setActiveTab('WEATHER')} />
 
       {/* 📱 VIEWPORT (Hardware Instrument Surface) */}
       <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 max-w-7xl mx-auto w-full custom-scrollbar min-h-0" style={{ WebkitOverflowScrolling: 'touch' } as any}>
