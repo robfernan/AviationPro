@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAviation } from './hooks/useAviation';
 
 // --- Import Unified Modules ---
+import PlannerHub from './components/PlannerHub';
 import CX6Calculator from './components/CX6Calculator';
 import WeatherCalculator from './components/WeatherCalculator';
 import FlightLogs from './components/FlightLogs';
@@ -13,7 +14,7 @@ const isDesktop = !!runtime;
 
 const App: React.FC = () => {
   const { flights } = useAviation();
-  const [activeTab, setActiveTab] = useState<'PLANNER' | 'WEATHER' | 'LOGS' | 'TOOLS'>('PLANNER');
+  const [activeTab, setActiveTab] = useState<'NAVLOG' | 'CX6' | 'WEATHER' | 'LOGS' | 'TOOLS'>('NAVLOG');
 
   const handleQuit = () => isDesktop && runtime?.Quit();
   const handleMinimise = () => isDesktop && runtime?.WindowMinimise();
@@ -34,16 +35,16 @@ const App: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-black border border-zinc-800 rounded px-1 py-0.5" style={{ ["--wails-draggable" as any]: "no-drag" }}>
-          {(['PLANNER', 'WEATHER', 'LOGS', 'TOOLS'] as const).map((tab) => (
+          {(['NAVLOG', 'CX6', 'WEATHER', 'LOGS', 'TOOLS'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`min-w-[64px] sm:min-w-[76px] px-2.5 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] font-bold tracking-wider transition-all rounded-sm shrink-0 ${
+              className={`min-w-[60px] sm:min-w-[72px] px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] font-bold tracking-wider transition-all rounded-sm shrink-0 ${
                 activeTab === tab ? 'bg-red-700 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
               }`}
             >
-              <span className="sm:hidden">{tab === 'PLANNER' ? 'PLAN' : tab === 'WEATHER' ? 'WX' : tab === 'LOGS' ? 'LOG' : 'TOOL'}</span>
-              <span className="hidden sm:inline">{tab}</span>
+              <span className="sm:hidden">{tab === 'NAVLOG' ? 'PLAN' : tab === 'CX6' ? 'CX6' : tab === 'WEATHER' ? 'WX' : tab === 'LOGS' ? 'LOG' : 'TOOL'}</span>
+              <span className="hidden sm:inline">{tab === 'NAVLOG' ? 'NAVLOG' : tab}</span>
             </button>
           ))}
 
@@ -61,7 +62,13 @@ const App: React.FC = () => {
 
       {/* 📱 VIEWPORT (Hardware Instrument Surface) */}
       <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 max-w-7xl mx-auto w-full custom-scrollbar min-h-0" style={{ WebkitOverflowScrolling: 'touch' } as any}>
-        {activeTab === 'PLANNER' && (
+        {activeTab === 'NAVLOG' && (
+          <div className="h-full w-full animate-in fade-in duration-300 min-h-0">
+            <PlannerHub darkMode={true} />
+          </div>
+        )}
+
+        {activeTab === 'CX6' && (
           <div className="h-full w-full animate-in fade-in duration-300 min-h-0">
             <CX6Calculator darkMode={true} />
           </div>
