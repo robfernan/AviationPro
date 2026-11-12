@@ -56,7 +56,7 @@ const Checklists: React.FC<ChecklistsProps> = ({ darkMode }) => {
         type: 'cruise',
         items: [
           { id: '1', text: 'Monitor altitude and heading', completed: false, notes: '' },
-          { id: '2', text: 'Monitor engine instruments', completed: false, notes: '' },
+          { id: '2', text: 'Monitor engine gauges', completed: false, notes: '' },
           { id: '3', text: 'Check fuel quantity', completed: false, notes: '' },
           { id: '4', text: 'Update navigation log', completed: false, notes: '' },
           { id: '5', text: 'Monitor VOR/GPS position', completed: false, notes: '' }

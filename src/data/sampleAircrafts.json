@@ -15,6 +15,7 @@
     "fuelCapacityGal": 53,
     "usableFuelGal": 53,
     "fuelWeightLbs": 318,
+    "fuelBurnGPH": 8.5,
     "startupDeductionLbs": 8,
     "burnedDeductionLbs": 120,
     "notes": "Cessna 172S sample values per user-provided data."
@@ -29,6 +30,7 @@
     "aftCG": 47.0,
     "fuelArm": 48,
     "fuelCapacityGal": 48,
+    "fuelBurnGPH": 9.0,
     "notes": "Sample PA-28 values."
   }
 ]

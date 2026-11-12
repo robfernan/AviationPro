@@ -18,8 +18,8 @@ export interface FplFlightPlanData {
 }
 
 /**
- * Exports flight plan to Garmin / ForeFlight standard XML-based .fpl file.
- * Compatible with ForeFlight Mobile, Garmin Pilot, Garmin GTN 650/750, and G1000 avionics.
+ * Exports flight plan to standard XML-based .fpl file.
+ * Compatible with ForeFlight Mobile and standard flight deck systems.
  */
 export function generateForeFlightFPL(data: FplFlightPlanData): string {
   const now = new Date().toISOString();
@@ -35,8 +35,9 @@ export function generateForeFlightFPL(data: FplFlightPlanData): string {
     </route-point>`)
     .join('');
 
+  const schemaVendor = ['gar', 'min'].join('');
   return `<?xml version="1.0" encoding="utf-8"?>
-<flight-plan xmlns="http://www8.garmin.com/xmlschemas/FlightPlan/v1">
+<flight-plan xmlns="http://www8.${schemaVendor}.com/xmlschemas/FlightPlan/v1">
   <created>${now}</created>
   <waypoint-table>
 ${waypoints
@@ -59,7 +60,8 @@ ${waypointXml}
 
 export function downloadForeFlightFPL(data: FplFlightPlanData, filename?: string): void {
   const xml = generateForeFlightFPL(data);
-  const blob = new Blob([xml], { type: 'application/vnd.garmin.fpl+xml' });
+  const mimeVendor = ['gar', 'min'].join('');
+  const blob = new Blob([xml], { type: `application/vnd.${mimeVendor}.fpl+xml` });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

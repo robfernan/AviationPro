@@ -972,7 +972,7 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
               <div className="space-y-2 text-sm">
                 <p><strong>Using Sectional Charts:</strong> Measure distance between airports using the scale at the bottom of the chart. Use a plotter or ruler for accuracy.</p>
                 <p><strong>Using ForeFlight:</strong> Enter departure and destination airports, then use the route planner to get accurate distances and suggested checkpoints.</p>
-                <p><strong>Using Garmin Pilot:</strong> Create a flight plan, then use the route analysis to get precise distances and recommended waypoints.</p>
+                <p><strong>Using EFB Route Analysis:</strong> Create a flight plan, then use the route analysis to get precise distances and recommended waypoints.</p>
                 <p><strong>Checkpoint Selection:</strong> Choose checkpoints every 20-30 minutes of flight time, preferably at VOR stations, airports, or prominent landmarks for flight following.</p>
               </div>
             </div>

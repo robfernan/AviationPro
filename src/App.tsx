@@ -31,7 +31,7 @@ const App: React.FC = () => {
           <div className="w-2.5 h-2.5 bg-red-600 rounded-sm animate-pulse" />
           <span className="text-red-500 font-black tracking-tight text-xl italic">AVIATIONPRO</span>
           <span className="hidden md:inline text-[10px] uppercase tracking-widest text-zinc-400 font-bold border-l border-zinc-800 pl-3">
-            Garmin Pilot • ForeFlight • CX-6 Glass Cockpit
+            Preflight Planning • EFB Companion • CX-6 Flight Computer
           </span>
         </div>
         
@@ -101,10 +101,8 @@ const App: React.FC = () => {
         <div className="flex items-center gap-3 sm:gap-6 min-w-0">
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> Nominal</span>
           <span className="whitespace-nowrap">Logs: <strong className="text-zinc-200">{flights.length}</strong></span>
-          <span className="hidden sm:inline text-zinc-700">•</span>
-          <span className="hidden sm:inline text-zinc-300">Robert Fernandez • FAA Student Pilot (129.2+ Hrs)</span>
         </div>
-        <div className="text-red-500 font-bold hidden sm:block whitespace-nowrap">100% OFFLINE // GARMIN .FPL READY</div>
+        <div className="text-red-500 font-bold hidden sm:block whitespace-nowrap">100% OFFLINE // STANDARD .FPL READY</div>
       </footer>
     </div>
   );
