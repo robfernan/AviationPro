@@ -1,15 +1,40 @@
 # AviationPro — Preflight Dispatch & E6B Desk Companion
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-0284c7.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-38bdf8.svg)](tsconfig.json)
-[![Vite](https://img.shields.io/badge/Vite-5.4-0ea5e9.svg)](vite.config.ts)
-[![PWA](https://img.shields.io/badge/PWA-Offline--First-10b981.svg)](public/manifest.webmanifest)
-[![Targets](https://img.shields.io/badge/Targets-Web%20PWA%20%7C%20Wails%20Desktop%20%7C%20Capacitor%20%7C%20Wear%20OS-0284c7.svg)](package.json)
+[![Live PWA Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-38bdf8?style=flat-square&logo=github)](https://robfernan.github.io/AviationPro/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0284c7?style=flat-square)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-38bdf8?style=flat-square&logo=typescript)](tsconfig.json)
+[![Vite](https://img.shields.io/badge/Vite-5.4-0ea5e9?style=flat-square&logo=vite)](vite.config.ts)
+[![PWA](https://img.shields.io/badge/PWA-Offline--First-10b981?style=flat-square)](public/manifest.webmanifest)
+[![Targets](https://img.shields.io/badge/Targets-Web%20PWA%20%7C%20Wails%20Desktop%20%7C%20Capacitor%20%7C%20Wear%20OS-0284c7?style=flat-square)](package.json)
 
 **AviationPro** is an enterprise-structured, offline-first preflight planning and E6B/CX-6 flight computer built for student pilots, CFIs, and general aviation dispatch desks. Designed to sit alongside **Flight Schedule Pro**, **PilotBase**, **ForeFlight**, and **E6BX**, it combines exact ISA atmospheric math, POH takeoff & landing distance interpolation, multi-station Weight & Balance CG envelope visualization, FAA PAVE/IMSAFE risk scoring, and Part 61 training progress tracking in a cohesive **Slate & Sky Blue** interface engineered down to the `375×667` iPhone SE viewport benchmark.
 
+- **Live Web & Installable PWA:** [https://robfernan.github.io/AviationPro/](https://robfernan.github.io/AviationPro/)
+
 > [!IMPORTANT]
 > **Preflight Planning Notice:** AviationPro is a ground preflight dispatch and training companion. Pilots in Command must always verify performance, weight & balance, and weather data against the official aircraft Pilot's Operating Handbook (POH/AFM) and official aviation weather briefings prior to flight.
+
+---
+
+## Live Application Previews
+
+### Desktop Preflight Dispatch & Navigation Log (`1280×820`)
+![AviationPro Desktop VFR Cross-Country NavLog](assets/screenshots/hero_desktop.png)
+
+### POH Takeoff & Landing Solver & Multi-Station Weight & Balance
+| POH Takeoff/Landing Distance & V-Speeds (`T/O & LDG`) | Dynamic Multi-Station CG Envelope (`W&B`) |
+| :---: | :---: |
+| ![POH Takeoff & Landing Performance Solver](assets/screenshots/screenshot_performance.png) | ![Weight & Balance Envelope Calculator](assets/screenshots/screenshot_wb.png) |
+
+### FAA PAVE / IMSAFE Risk Matrix & Live Weather / Density Altitude
+| FAA PAVE / IMSAFE Flight Risk Assessment (`FRAT`) | NOAA METAR/TAF & Exact ISA Density Altitude |
+| :---: | :---: |
+| ![FAA PAVE IMSAFE FRAT Risk Matrix](assets/screenshots/screenshot_frat.png) | ![Weather & Exact ISA Density Altitude](assets/screenshots/screenshot_weathercalculator.png) |
+
+### FAR 61.109 Logbook Tracker, iPhone SE (`375×667`), & Google Pixel Watch 1
+| FAR 61.109 & 90-Day Recency Logbook | iPhone SE (`375×667`) Benchmark | Google Pixel Watch 1 / Wear OS |
+| :---: | :---: | :---: |
+| ![Pilot Flight Logbook & FAR 61.109 Tracker](assets/screenshots/screenshot_flightlog.png) | ![iPhone SE 375x667 Mobile Benchmark](assets/screenshots/hero_mobile.png) | ![Google Pixel Watch 1 Watch Face](assets/screenshots/hero_watch_face.png) |
 
 ---
 
@@ -41,7 +66,7 @@ flowchart TD
     end
 
     subgraph Targets["Multi-Platform Delivery"]
-        Web["Installable Web PWA (dist/)"]
+        Web["Installable Web PWA (dist/ & gh-pages)"]
         Desktop["Native Desktop Binary (platforms/desktop/wails/)"]
         Mobile["Android & iOS (android/ & ios/)"]
         Wear["Google Pixel Watch 1 / Wear OS (android/wear/ & watch_face_design/)"]
@@ -74,6 +99,17 @@ flowchart TD
 
 ```text
 AviationPro/
+├── assets/
+│   └── screenshots/                 # High-DPI application & device screenshots for documentation
+│       ├── hero_desktop.png         # 1280×820 VFR Cross-Country NavLog & Flight Planner
+│       ├── hero_mobile.png          # 375×667 iPhone SE benchmark mobile view
+│       ├── hero_watch_app.png       # Wear OS companion app preview
+│       ├── hero_watch_face.png      # Google Pixel Watch 1 Watch Face Studio preview
+│       ├── screenshot_flightlog.png # FAR 61.109 & 90-day currency logbook view
+│       ├── screenshot_frat.png      # FAA PAVE / IMSAFE FRAT risk assessment matrix
+│       ├── screenshot_performance.png # POH Takeoff/Landing distance & V-Speed solver
+│       ├── screenshot_wb.png        # Multi-station Weight & Balance CG envelope
+│       └── screenshot_weathercalculator.png # Live METAR/TAF & Exact ISA Density Altitude
 ├── public/
 │   ├── manifest.webmanifest         # Installable Web App Manifest (standalone PWA)
 │   ├── sw.js                        # Offline-first Service Worker (app shell + weather cache)
@@ -117,7 +153,8 @@ AviationPro/
 │   ├── verify-all.sh                # TypeScript check, terminology audit, unit tests, build
 │   ├── build-web.sh                 # Production web & PWA bundle build
 │   ├── build-desktop.sh             # Native Wails desktop binary build
-│   └── build-mobile.sh              # Capacitor Android/iOS & Wear OS asset sync
+│   ├── build-mobile.sh              # Capacitor Android/iOS & Wear OS asset sync
+│   └── deploy-pages.sh              # Direct local deployment of dist/ to GitHub Pages (gh-pages)
 ├── platforms/
 │   ├── desktop/wails/               # Go + Wails native desktop wrapper
 │   └── mobile/capacitor/            # Capacitor mobile configuration
@@ -129,9 +166,9 @@ AviationPro/
 
 ---
 
-## Local Verification & Build Commands
+## Local Verification, Build & Deployment Commands
 
-All verification and builds run locally via `scripts/`:
+All verification, native builds, and GitHub Pages deployments run locally via `scripts/`:
 
 ```bash
 # 1. Run the complete verification gate (tsc --noEmit, terminology audit, bun test, vite build)
@@ -146,10 +183,13 @@ bun run dev
 # 4. Build production Web & installable PWA bundle (dist/)
 ./scripts/build-web.sh
 
-# 5. Build native Linux/macOS/Windows desktop binary (platforms/desktop/wails/build/bin/AviationPro)
+# 5. Deploy production PWA bundle directly to GitHub Pages (gh-pages branch)
+./scripts/deploy-pages.sh
+
+# 6. Build native Linux/macOS/Windows desktop binary (platforms/desktop/wails/build/bin/AviationPro)
 ./scripts/build-desktop.sh
 
-# 6. Sync production bundle to Android & iOS Capacitor targets
+# 7. Sync production bundle to Android & iOS Capacitor targets
 ./scripts/build-mobile.sh
 ```
 
