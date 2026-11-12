@@ -32,6 +32,7 @@ if command -v gh >/dev/null 2>&1; then
     -f build_type=legacy \
     -f "source[branch]=gh-pages" \
     -f "source[path]=/" >/dev/null 2>&1 || true
+  gh api --method POST repos/robfernan/AviationPro/pages/builds >/dev/null 2>&1 || true
 fi
 
 echo "✅ Published latest build to https://robfernan.github.io/AviationPro/"
