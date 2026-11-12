@@ -8,24 +8,24 @@ bun run build
 cp dist/index.html dist/404.html
 touch dist/.nojekyll
 
-TMP_DIR=$(mktemp -d)
-cp -r dist/* dist/.nojekyll "$TMP_DIR/"
+ASSETS_TMP=$(mktemp -d)
+WT_TMP=$(mktemp -d)
+cp -r dist/* dist/.nojekyll "$ASSETS_TMP/"
 
 git worktree prune
 git branch -D gh-pages 2>/dev/null || true
-git worktree add --detach "$TMP_DIR/wt"
+git worktree add --detach "$WT_TMP"
 (
-  cd "$TMP_DIR/wt"
+  cd "$WT_TMP"
   git checkout --orphan gh-pages
   git rm -rf . >/dev/null 2>&1 || true
-  cp -r "$TMP_DIR"/* "$TMP_DIR/.nojekyll" .
-  rm -rf wt
+  cp -r "$ASSETS_TMP"/* "$ASSETS_TMP/.nojekyll" .
   git add -A
   git commit -m "deploy(pages): publish production PWA bundle to GitHub Pages"
   git push -f origin gh-pages
 )
-git worktree remove --force "$TMP_DIR/wt"
-rm -rf "$TMP_DIR"
+git worktree remove --force "$WT_TMP"
+rm -rf "$ASSETS_TMP" "$WT_TMP"
 
 if command -v gh >/dev/null 2>&1; then
   gh api --method PUT repos/robfernan/AviationPro/pages \
