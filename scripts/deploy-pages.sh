@@ -17,12 +17,12 @@ git branch -D gh-pages 2>/dev/null || true
 git worktree add --detach "$WT_TMP"
 (
   cd "$WT_TMP"
-  git checkout --orphan gh-pages
+  git checkout --orphan gh-pages-tmp
   git rm -rf . >/dev/null 2>&1 || true
   cp -r "$ASSETS_TMP"/* "$ASSETS_TMP/.nojekyll" .
   git add -A
   git commit -m "deploy(pages): publish production PWA bundle to GitHub Pages"
-  git push -f origin gh-pages
+  git push -f origin HEAD:gh-pages
 )
 git worktree remove --force "$WT_TMP"
 rm -rf "$ASSETS_TMP" "$WT_TMP"
