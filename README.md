@@ -203,3 +203,10 @@ bun run dev
 AviationPro is a fully installable **Offline-First Progressive Web App**:
 - **Web App Manifest (`public/manifest.webmanifest`):** Supports standalone window mode on iOS, Android, macOS, Windows, and Linux Chrome/Edge/Safari with `192×192`, `512×512`, and vector SVG icons.
 - **Offline Service Worker (`public/sw.js`):** Pre-caches the application shell on install, uses **stale-while-revalidate** for static bundles so all calculators, checklists, W&B envelopes, and IndexedDB logbooks work with zero internet connection, and uses **network-first with offline cache fallback** for NOAA METAR/TAF queries.
+
+---
+
+## Acknowledgments
+
+Built and maintained by **Robert Fernandez**, with AI-assisted engineering from **Google Antigravity** and **Grok**.
+
