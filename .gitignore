@@ -1,9 +1,11 @@
-cat <<EOT >> .gitignore
+# Dependencies
+node_modules/
 
 # Build outputs
 dist/
 build/
 bin/
+platforms/desktop/wails/build/bin/
 
 # IDEs and Editors
 .vscode/
@@ -13,14 +15,15 @@ bin/
 
 # Environment variables
 .env
-.env.local
+.env.*
+!.env.example
 
 # Operating System files
 .DS_Store
 Thumbs.db
 
-# Capacitor/Mobile specific
+# Capacitor / Mobile specific
 App Data/
-EOT
-
-node_modules/
+android/.gradle/
+android/app/build/
+ios/App/Pods/

@@ -12,36 +12,35 @@ const PlannerHub: React.FC<PlannerHubProps> = ({ darkMode }) => {
   const [activePlannerTab, setActivePlannerTab] = useState<'flightplan' | 'briefing' | 'checklists'>('flightplan');
 
   const plannerTabs = [
-    { id: 'flightplan', label: 'Flight Planner', icon: Navigation, component: FlightPlanForm },
-    { id: 'briefing', label: 'Briefing', icon: FileText, component: Briefing },
-    { id: 'checklists', label: 'Checklists', icon: CheckSquare2, component: Checklists }
+    { id: 'flightplan', label: 'NavLog & Flight Planner', shortLabel: 'NavLog', icon: Navigation, component: FlightPlanForm },
+    { id: 'briefing', label: 'Preflight Briefing PDF', shortLabel: 'Briefing PDF', icon: FileText, component: Briefing },
+    { id: 'checklists', label: 'Checklists', shortLabel: 'Checklists', icon: CheckSquare2, component: Checklists },
   ];
 
-  const ActiveComponent = plannerTabs.find(t => t.id === activePlannerTab)?.component || FlightPlanForm;
+  const ActiveComponent = plannerTabs.find((t) => t.id === activePlannerTab)?.component || FlightPlanForm;
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-2.5 sm:space-y-4">
       {/* Planning Sub-tabs */}
-      <div className="flex flex-wrap bg-black border border-zinc-800 rounded-sm overflow-hidden">
-        <div className="flex gap-0 overflow-x-auto">
-          {plannerTabs.map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActivePlannerTab(tab.id as any)}
-                className={`flex items-center justify-center gap-2 px-4 py-4 text-[9px] font-black tracking-widest border-r border-zinc-800 transition-all whitespace-nowrap flex-shrink-0 ${
-                  activePlannerTab === tab.id
-                    ? 'bg-red-700 text-white shadow-[inset_0_0_20px_rgba(0,0,0,0.4)]'
-                    : 'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900/50'
-                }`}
-              >
-                <Icon size={18} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+      <div className="grid grid-cols-3 sm:flex sm:flex-wrap bg-slate-900/90 border border-slate-800/80 rounded-lg p-1 gap-1 w-full sm:w-fit">
+        {plannerTabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActivePlannerTab(tab.id as any)}
+              className={`flex items-center justify-center gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold tracking-wide rounded-md transition-all whitespace-nowrap ${
+                activePlannerTab === tab.id
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70'
+              }`}
+            >
+              <Icon size={13} className="shrink-0" />
+              <span className="sm:hidden">{tab.shortLabel}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Planning Tab Content */}

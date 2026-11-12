@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { Plus, Minus, Printer, Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Minus, Printer, Download, Compass, RefreshCw, Calculator } from 'lucide-react';
 import React from 'react';
+import { useFlightStore } from '../core/flightStore';
+import { AviationMath } from '../core/aviationMath';
+
 interface Checkpoint {
   id: string;
   name: string;
@@ -36,128 +39,177 @@ interface FlightPlanFormProps {
   darkMode: boolean;
 }
 
-const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
+const createBlankCheckpoint = (
+  id: string,
+  name: string,
+  windDir = '',
+  windVel = '',
+  temp = ''
+): Checkpoint => ({
+  id,
+  name,
+  trueCourse: '',
+  altitude: '4500',
+  windDirection: windDir,
+  windVelocity: windVel,
+  temperature: temp,
+  planTAS: '110',
+  windCorrection: '',
+  trueHeading: '',
+  variation: '',
+  magHeading: '',
+  deviation: '',
+  compassHeading: '',
+  distance: '',
+  remaining: '',
+  groundSpeed: '',
+  est: '',
+  act: '',
+  ete: '',
+  ate: '',
+  eta: '',
+  ata: '',
+  fuelUsed: '',
+  fuelRemaining: '',
+  vorFreq: '',
+  vorRadial: '',
+  vorIdent: ''
+});
+
+const FlightPlanForm: React.FC<FlightPlanFormProps> = () => {
+  const { currentAircraft, windDirection, windSpeed, temperatureC, departureAirport } = useFlightStore();
   const [instructionsOpen, setInstructionsOpen] = useState(false);
-  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([
-    { 
-      id: '1', 
-      name: 'DEPARTURE', 
-      trueCourse: '', 
-      altitude: '', 
-      windDirection: '', 
-      windVelocity: '', 
-      temperature: '', 
-      planTAS: '', 
-      windCorrection: '', 
-      trueHeading: '', 
-      variation: '', 
-      magHeading: '', 
-      deviation: '', 
-      compassHeading: '', 
-      distance: '', 
-      remaining: '', 
-      groundSpeed: '', 
-      est: '', 
-      act: '', 
-      ete: '', 
-      ate: '', 
-      eta: '', 
-      ata: '', 
-      fuelUsed: '', 
-      fuelRemaining: '', 
-      vorFreq: '', 
-      vorRadial: '',
-      vorIdent: '' 
-    },
-    { 
-      id: '2', 
-      name: 'CHECKPOINT 1', 
-      trueCourse: '', 
-      altitude: '', 
-      windDirection: '', 
-      windVelocity: '', 
-      temperature: '', 
-      planTAS: '', 
-      windCorrection: '', 
-      trueHeading: '', 
-      variation: '', 
-      magHeading: '', 
-      deviation: '', 
-      compassHeading: '', 
-      distance: '', 
-      remaining: '', 
-      groundSpeed: '', 
-      est: '', 
-      act: '', 
-      ete: '', 
-      ate: '', 
-      eta: '', 
-      ata: '', 
-      fuelUsed: '', 
-      fuelRemaining: '', 
-      vorFreq: '', 
-      vorRadial: '',
-      vorIdent: '' 
-    },
-    { 
-      id: '3', 
-      name: 'DESTINATION', 
-      trueCourse: '', 
-      altitude: '', 
-      windDirection: '', 
-      windVelocity: '', 
-      temperature: '', 
-      planTAS: '', 
-      windCorrection: '', 
-      trueHeading: '', 
-      variation: '', 
-      magHeading: '', 
-      deviation: '', 
-      compassHeading: '', 
-      distance: '', 
-      remaining: '', 
-      groundSpeed: '', 
-      est: '', 
-      act: '', 
-      ete: '', 
-      ate: '', 
-      eta: '', 
-      ata: '', 
-      fuelUsed: '', 
-      fuelRemaining: '', 
-      vorFreq: '', 
-      vorRadial: '',
-      vorIdent: '' 
-    }
-  ]);
+
+  const usableFuelDefault = currentAircraft.usableFuelGal ?? currentAircraft.fuelCapacityGal ?? 53;
+  const burnRateDefault = currentAircraft.fuelBurnGPH ?? 8.5;
+  const tailDefault =
+    currentAircraft.id === 'c172'
+      ? 'N172SP'
+      : currentAircraft.id === 'pa28'
+      ? 'N281PA'
+      : currentAircraft.id === 'da40'
+      ? 'N400DA'
+      : currentAircraft.id.toUpperCase();
 
   const [flightInfo, setFlightInfo] = useState({
-    aircraft: '',
-    tailNumber: '',
+    aircraft: currentAircraft.name,
+    tailNumber: tailDefault,
     pilot: '',
-    departure: '',
+    departure: departureAirport,
     destination: '',
     route: '',
-    altitude: '',
-    airspeed: '',
-    fuelOnBoard: '',
+    altitude: '4500',
+    airspeed: '110',
+    fuelOnBoard: String(usableFuelDefault),
     alternateAirport: '',
     remarks: ''
   });
 
+  // Sync aircraft header defaults when active aircraft changes in Hangar
+  useEffect(() => {
+    setFlightInfo((prev) => ({
+      ...prev,
+      aircraft: currentAircraft.name,
+      tailNumber: tailDefault,
+      fuelOnBoard: String(usableFuelDefault)
+    }));
+  }, [currentAircraft.name, tailDefault, usableFuelDefault]);
+
+  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([
+    createBlankCheckpoint('1', 'DEPARTURE', String(windDirection), String(windSpeed), String(temperatureC)),
+    createBlankCheckpoint('2', 'CHECKPOINT 1', String(windDirection), String(windSpeed), String(temperatureC)),
+    createBlankCheckpoint('3', 'DESTINATION', String(windDirection), String(windSpeed), String(temperatureC))
+  ]);
+
+  const computeRowNavigation = (cp: Checkpoint, fuelBurnGph: number): Checkpoint => {
+    const tc = parseFloat(cp.trueCourse);
+    const tas = parseFloat(cp.planTAS);
+    const wDir = parseFloat(cp.windDirection);
+    const wVel = parseFloat(cp.windVelocity);
+    const magVar = parseFloat(cp.variation) || 0;
+    const compDev = parseFloat(cp.deviation) || 0;
+    const dist = parseFloat(cp.distance);
+
+    const updated = { ...cp };
+
+    if (
+      Number.isFinite(tc) &&
+      Number.isFinite(tas) &&
+      tas > 0 &&
+      Number.isFinite(wDir) &&
+      Number.isFinite(wVel) &&
+      wVel >= 0
+    ) {
+      const windResult = AviationMath.calculateWCA(tc, tas, wDir, wVel);
+      if (
+        !windResult.error &&
+        windResult.windCorrectionAngle !== null &&
+        windResult.heading !== null &&
+        windResult.groundSpeed !== null
+      ) {
+        updated.windCorrection = String(windResult.windCorrectionAngle);
+        updated.trueHeading = String(windResult.heading);
+        updated.groundSpeed = String(windResult.groundSpeed);
+
+        const mh = AviationMath.normalizeHeading(Math.round(windResult.heading + magVar));
+        const ch = AviationMath.normalizeHeading(Math.round(mh + compDev));
+        updated.magHeading = String(mh);
+        updated.compassHeading = String(ch);
+
+        if (Number.isFinite(dist) && dist > 0 && windResult.groundSpeed > 0) {
+          const eteMinutes = (dist / windResult.groundSpeed) * 60;
+          updated.ete = eteMinutes.toFixed(1);
+          const legFuel = (eteMinutes / 60) * fuelBurnGph;
+          updated.fuelUsed = legFuel.toFixed(1);
+        }
+      }
+    }
+
+    return updated;
+  };
+
+  const recalculateAllLegs = (rows: Checkpoint[], fobGallons: number, fuelBurnGph: number): Checkpoint[] => {
+    const computed = rows.map((row) => computeRowNavigation(row, fuelBurnGph));
+    const totalDist = computed.reduce((sum, r) => sum + (parseFloat(r.distance) || 0), 0);
+
+    let cumulativeDist = 0;
+    let cumulativeFuel = 0;
+
+    return computed.map((row) => {
+      const legDist = parseFloat(row.distance) || 0;
+      const legFuel = parseFloat(row.fuelUsed) || 0;
+      cumulativeDist += legDist;
+      cumulativeFuel += legFuel;
+
+      return {
+        ...row,
+        remaining: totalDist > 0 ? Math.max(0, totalDist - cumulativeDist).toFixed(1) : row.remaining,
+        fuelRemaining: fobGallons > 0 ? Math.max(0, fobGallons - cumulativeFuel).toFixed(1) : row.fuelRemaining
+      };
+    });
+  };
+
+  const syncWeatherAndAirframeToLegs = () => {
+    const fob = parseFloat(flightInfo.fuelOnBoard) || usableFuelDefault;
+    const synced = checkpoints.map((cp) => ({
+      ...cp,
+      windDirection: String(windDirection),
+      windVelocity: String(windSpeed),
+      temperature: String(temperatureC)
+    }));
+    setCheckpoints(recalculateAllLegs(synced, fob, burnRateDefault));
+  };
+
   const addCheckpoint = () => {
-    // Find the destination checkpoint (last one)
     const destinationIndex = checkpoints.length - 1;
-    const enRouteCount = checkpoints.length - 2; // Subtract DEPARTURE and DESTINATION
+    const enRouteCount = checkpoints.length - 2;
 
     let newCheckpointName: string;
     if (enRouteCount === 0) {
-      // First en route checkpoint
       newCheckpointName = 'EN ROUTE';
     } else if (enRouteCount === 1) {
-      // Adding second en route checkpoint, renumber existing to CHECKPOINT 1
       const updatedCheckpoints = checkpoints.map((cp, index) => {
-        if (index === 1) { // The EN ROUTE checkpoint becomes CHECKPOINT 1
+        if (index === 1) {
           return { ...cp, name: 'CHECKPOINT 1' };
         }
         return cp;
@@ -165,42 +217,17 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
       setCheckpoints(updatedCheckpoints);
       newCheckpointName = 'CHECKPOINT 2';
     } else {
-      // Multiple checkpoints already exist
       newCheckpointName = `CHECKPOINT ${enRouteCount + 1}`;
     }
 
-    const newCheckpoint: Checkpoint = {
-      id: Date.now().toString(),
-      name: newCheckpointName,
-      trueCourse: '',
-      altitude: '',
-      windDirection: '',
-      windVelocity: '',
-      temperature: '',
-      planTAS: '',
-      windCorrection: '',
-      trueHeading: '',
-      variation: '',
-      magHeading: '',
-      deviation: '',
-      compassHeading: '',
-      distance: '',
-      remaining: '',
-      groundSpeed: '',
-      est: '',
-      act: '',
-      ete: '',
-      ate: '',
-      eta: '',
-      ata: '',
-      fuelUsed: '',
-      fuelRemaining: '',
-      vorFreq: '',
-      vorRadial: '',
-      vorIdent: ''
-    };
+    const newCheckpoint = createBlankCheckpoint(
+      Date.now().toString(),
+      newCheckpointName,
+      String(windDirection),
+      String(windSpeed),
+      String(temperatureC)
+    );
 
-    // Insert the new checkpoint before the destination
     const updatedCheckpoints = [
       ...checkpoints.slice(0, destinationIndex),
       newCheckpoint,
@@ -214,29 +241,31 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
     if (checkpoints.length > 2) {
       const updatedCheckpoints = checkpoints.filter(cp => cp.id !== id);
 
-      // Renumber checkpoints after removal
       const renumberedCheckpoints = updatedCheckpoints.map((cp, index) => {
         if (index === 0) {
           return { ...cp, name: 'DEPARTURE' };
         } else if (index === updatedCheckpoints.length - 1) {
           return { ...cp, name: 'DESTINATION' };
         } else if (updatedCheckpoints.length === 3) {
-          // If only one en route checkpoint, call it EN ROUTE
           return { ...cp, name: 'EN ROUTE' };
         } else {
-          // Multiple en route checkpoints, number them
           return { ...cp, name: `CHECKPOINT ${index}` };
         }
       });
 
-      setCheckpoints(renumberedCheckpoints);
+      const fob = parseFloat(flightInfo.fuelOnBoard) || usableFuelDefault;
+      setCheckpoints(recalculateAllLegs(renumberedCheckpoints, fob, burnRateDefault));
     }
   };
 
   const updateCheckpoint = (id: string, field: keyof Checkpoint, value: string) => {
-    setCheckpoints(checkpoints.map(cp => 
-      cp.id === id ? { ...cp, [field]: value } : cp
-    ));
+    const fob = parseFloat(flightInfo.fuelOnBoard) || usableFuelDefault;
+    setCheckpoints((prev) => {
+      const nextRows = prev.map((cp) =>
+        cp.id === id ? { ...cp, [field]: value } : cp
+      );
+      return recalculateAllLegs(nextRows, fob, burnRateDefault);
+    });
   };
 
   const calculateTotals = () => {
@@ -244,10 +273,10 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
       sum + (parseFloat(cp.distance) || 0), 0
     );
 
-    // Calculate total flight time from the last checkpoint's ETA
+    const sumLegEte = checkpoints.reduce((sum, cp) => sum + (parseFloat(cp.ete) || 0), 0);
     const lastCheckpoint = checkpoints[checkpoints.length - 1];
-    let totalETE = 0;
-    if (lastCheckpoint && lastCheckpoint.eta) {
+    let totalETE = sumLegEte;
+    if (totalETE === 0 && lastCheckpoint && lastCheckpoint.eta) {
       const etaParts = lastCheckpoint.eta.split(':');
       if (etaParts.length === 2) {
         const hours = parseFloat(etaParts[0]) || 0;
@@ -266,7 +295,6 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
   const { totalDistance, totalETE, totalFuelUsed } = calculateTotals();
 
   const handlePrint = () => {
-    // Create a print-friendly version
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -275,7 +303,7 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
             <title>Flight Plan - ${flightInfo.tailNumber || 'Unknown'}</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+              h1 { color: #0284c7; border-bottom: 2px solid #0284c7; padding-bottom: 10px; }
               table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 12px; }
               th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
               th { background-color: #f3f4f6; font-weight: bold; }
@@ -289,7 +317,7 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
             </style>
           </head>
           <body>
-            <h1>FLIGHT PLAN</h1>
+            <h1>VFR NAVIGATION LOG & FLIGHT PLAN</h1>
             <div class="flight-info">
               <div><strong>Aircraft:</strong> ${flightInfo.aircraft || 'N/A'}</div>
               <div><strong>Tail Number:</strong> ${flightInfo.tailNumber || 'N/A'}</div>
@@ -301,7 +329,7 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
               <thead>
                 <tr>
                   <th rowspan="2">Checkpoint</th>
-                  <th colspan="2">A Planned</th>
+                  <th colspan="2">Planned</th>
                   <th colspan="2">Predicted Wind</th>
                   <th>TEMP</th>
                   <th>Plan TAS</th>
@@ -323,7 +351,7 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
                   <th>TC</th><th>ALT</th><th>DIR</th><th>VEL</th><th>°C</th><th>kts</th><th>°</th>
                   <th>°</th><th>°</th><th>°</th><th>°</th><th>°</th><th>Leg</th><th>Rem</th>
                   <th>kts</th><th>EST</th><th>ACT</th><th>ETE</th><th>ATE</th><th>ETA</th>
-                  <th>ATA</th>                  <th>Used</th><th>Rem</th><th>FREQ</th><th>RADIAL</th><th>ID</th>
+                  <th>ATA</th><th>Used</th><th>Rem</th><th>FREQ</th><th>RADIAL</th><th>ID</th>
                 </tr>
               </thead>
               <tbody>
@@ -398,7 +426,7 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
     };
 
     const dataStr = JSON.stringify(flightPlanData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
 
     const exportFileDefaultName = `flight-plan-${flightInfo.tailNumber || 'unknown'}-${new Date().toISOString().split('T')[0]}.json`;
 
@@ -408,707 +436,539 @@ const FlightPlanForm: React.FC<FlightPlanFormProps> = ({ darkMode }) => {
     linkElement.click();
   };
 
+  const headerInputClass = 'w-full px-3 py-2 border rounded-lg text-sm bg-slate-950 border-slate-800 text-slate-100 focus:border-sky-500 outline-none';
+  const cellInputClass = 'w-full p-1.5 border border-slate-800/80 bg-slate-950 text-slate-100 text-center text-xs sm:text-sm rounded font-mono focus:border-sky-500 outline-none';
+  const computedCellClass = 'w-full p-1.5 border border-sky-500/20 bg-sky-950/20 text-sky-300 text-center text-xs sm:text-sm rounded font-mono font-semibold focus:border-sky-500 outline-none';
+
   return (
-    <div className={`${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'} rounded-lg shadow-lg border-2 ${
-      darkMode ? 'border-zinc-800' : 'border-zinc-800'
-    }`}>
+    <div className="bg-slate-900/70 rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
       {/* Header */}
-      <div className={`${darkMode ? 'bg-zinc-900' : 'bg-zinc-900'} border-b-2 ${
-        darkMode ? 'border-zinc-800' : 'border-zinc-800'
-      } p-3 sm:p-4 md:p-6`}>
-        <div className="flex flex-row items-center justify-between mb-3 sm:mb-4 gap-3">
-          <h2 className="text-xl sm:text-2xl font-bold">FLIGHT PLAN</h2>
-          <div className="flex space-x-2 flex-shrink-0">
-            <button 
-              onClick={handlePrint}
-              className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
-              darkMode 
-                ? 'bg-zinc-950 hover:bg-red-700/20 text-zinc-100' 
-                : 'bg-zinc-950 hover:bg-red-700/10 text-zinc-100'
-            }`}>
-              <Printer className="w-3 h-3 sm:w-4 sm:h-4" />
+      <div className="bg-slate-900/90 border-b border-slate-800 p-4 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between mb-5 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
+              <Compass className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">VFR Cross-Country Navigation Log</h2>
+              <p className="text-xs text-slate-400">
+                Auto-computes WCA, True/Magnetic Heading, Ground Speed, Leg ETE, and Fuel Burn ({burnRateDefault} GPH)
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={syncWeatherAndAirframeToLegs}
+              className="px-3 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700"
+              title="Sync current METAR wind/temp and Hangar fuel burn to all legs"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Sync Store Wind & Temp</span>
             </button>
-            <button 
+            <button
+              onClick={handlePrint}
+              className="p-2.5 rounded-lg transition-colors flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+              title="Print Navigation Log"
+            >
+              <Printer className="w-4 h-4" />
+            </button>
+            <button
               onClick={handleDownload}
-              className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
-              darkMode 
-                ? 'bg-zinc-950 hover:bg-red-700/20 text-zinc-100' 
-                : 'bg-zinc-950 hover:bg-red-700/10 text-zinc-100'
-            }`}>
-              <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+              className="p-2.5 rounded-lg transition-colors flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+              title="Export JSON NavLog"
+            >
+              <Download className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs sm:text-sm font-medium mb-1">Aircraft Type</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Aircraft Model</label>
             <input
               type="text"
               value={flightInfo.aircraft}
-              onChange={(e) => setFlightInfo({...flightInfo, aircraft: e.target.value})}
-              className={`w-full p-2 border rounded-md text-sm ${
-                darkMode 
-                  ? 'bg-zinc-950 border-zinc-800/30 text-zinc-100' 
-                  : 'bg-zinc-950 border-zinc-800/30 text-zinc-100'
-              }`}
-              placeholder="C172, PA28, etc."
+              onChange={(e) => setFlightInfo({ ...flightInfo, aircraft: e.target.value })}
+              className={headerInputClass}
+              placeholder="Cessna 172S, PA-28, DA40"
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium mb-1">Tail Number</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Tail Number</label>
             <input
               type="text"
               value={flightInfo.tailNumber}
-              onChange={(e) => setFlightInfo({...flightInfo, tailNumber: e.target.value})}
-              className={`w-full p-2 border rounded-md text-sm ${
-                darkMode 
-                  ? 'bg-zinc-950 border-zinc-800/30 text-zinc-100' 
-                  : 'bg-zinc-950 border-zinc-800/30 text-zinc-100'
-              }`}
-              placeholder="N12345"
+              onChange={(e) => setFlightInfo({ ...flightInfo, tailNumber: e.target.value })}
+              className={`${headerInputClass} font-mono`}
+              placeholder="N172SP"
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium mb-1">Pilot in Command</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Pilot in Command</label>
             <input
               type="text"
               value={flightInfo.pilot}
-              onChange={(e) => setFlightInfo({...flightInfo, pilot: e.target.value})}
-              className={`w-full p-2 border rounded-md text-sm ${
-                darkMode 
-                  ? 'bg-zinc-950 border-zinc-800/30 text-zinc-100' 
-                  : 'bg-zinc-950 border-zinc-800/30 text-zinc-100'
-              }`}
-              placeholder="Pilot Name"
+              onChange={(e) => setFlightInfo({ ...flightInfo, pilot: e.target.value })}
+              className={headerInputClass}
+              placeholder="PIC Name"
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium mb-1">Fuel on Board (gal)</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1.5">Usable Fuel on Board (gal)</label>
             <input
               type="number"
               value={flightInfo.fuelOnBoard}
-              onChange={(e) => setFlightInfo({...flightInfo, fuelOnBoard: e.target.value})}
-              className={`w-full p-2 border rounded-md text-sm ${
-                darkMode 
-                  ? 'bg-zinc-950 border-zinc-800/30 text-zinc-100' 
-                  : 'bg-zinc-950 border-zinc-800/30 text-zinc-100'
-              }`}
-              placeholder="40"
+              onChange={(e) => {
+                const val = e.target.value;
+                setFlightInfo({ ...flightInfo, fuelOnBoard: val });
+                const fob = parseFloat(val) || 0;
+                setCheckpoints(recalculateAllLegs(checkpoints, fob, burnRateDefault));
+              }}
+              className={`${headerInputClass} font-mono`}
+              placeholder="53"
             />
           </div>
         </div>
       </div>
 
       {/* Checkpoints Table */}
-      <div className="p-2 sm:p-4 md:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
-          <h3 className="text-lg sm:text-xl font-bold text-zinc-100 dark:text-zinc-100">Route Planning</h3>
-          <div className="space-x-2">
-            <button
-              onClick={addCheckpoint}
-              className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg bg-red-700 hover:bg-red-700/80 dark:bg-red-700 dark:hover:bg-red-700/80 text-white`}
-            >
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1 sm:mr-2" />
-              Add Checkpoint
-            </button>
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+          <div className="flex items-center gap-2">
+            <Calculator className="w-4 h-4 text-sky-400" />
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+              Route Legs & Wind Triangle Solver
+            </h3>
           </div>
+          <button
+            onClick={addCheckpoint}
+            className="px-4 py-2 rounded-lg text-xs font-semibold transition bg-sky-600 hover:bg-sky-500 text-white flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            Add Waypoint Leg
+          </button>
         </div>
 
-        {/* Mobile scroll hint */}
-        <div className="lg:hidden mb-3 text-xs text-center py-2 px-3 rounded bg-zinc-900 dark:bg-zinc-900 text-zinc-400 dark:text-zinc-400 border border-zinc-800/30 dark:border-zinc-800/30">
-          ← Swipe left/right to view all table columns →
+        {/* Scroll hint */}
+        <div className="mb-3 text-xs text-center py-2 px-3 rounded-lg bg-slate-950/70 text-slate-400 border border-slate-800">
+          Enter <span className="text-sky-400 font-semibold">TC</span>, <span className="text-sky-400 font-semibold">Plan TAS</span>, <span className="text-sky-400 font-semibold">Wind DIR/VEL</span>, and <span className="text-sky-400 font-semibold">Leg Distance</span> — WCA, True/Mag Heading, GS, ETE, and Fuel Burn compute automatically.
         </div>
 
         <div className="relative">
-          {/* Scroll shadow indicators */}
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-theme-bg dark:from-theme-bg-dark to-transparent pointer-events-none z-10 lg:hidden"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-theme-bg dark:from-theme-bg-dark to-transparent pointer-events-none z-10 lg:hidden"></div>
-          
-          <div className="overflow-x-auto overflow-y-visible w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="overflow-x-auto custom-scrollbar w-full rounded-xl border border-slate-800">
             <div className="inline-block min-w-full">
-              <table className="w-full border-collapse text-xs sm:text-sm min-w-[2400px] bg-zinc-950 dark:bg-zinc-950 shadow-lg rounded-lg overflow-hidden">
-            <thead>
-              <tr className="bg-red-700 dark:bg-red-700 text-white">
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[140px] sm:min-w-[160px]" rowSpan={2}>Checkpoint</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold" colSpan={2}>A Planned</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold" colSpan={2}>Predicted Wind</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">TEMP</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">Plan<br/>TAS</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">WCA<br/>-L +R</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">True<br/>HDG</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">Var<br/>-E +W</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">Mag<br/>HDG</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">Dev<br/>+-</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">Compass<br/>HDG</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold" colSpan={2}>Distance</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">GS</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold" colSpan={2}>Time</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold" colSpan={2}>ETE/ATE</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold" colSpan={2}>ETA/ATA</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold" colSpan={2}>Fuel</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold" colSpan={3}>VOR</th>
-                <th className="border border-zinc-800/30 dark:border-zinc-800/30 p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold min-w-[60px] sm:min-w-[80px]">Actions</th>
-              </tr>
-              <tr className="bg-red-700/90 dark:bg-red-700/90 text-white">
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">TC</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">ALT</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">DIR</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">VEL</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">°C</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">kts</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">°</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">°</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">°</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">°</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">°</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">°</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">Leg</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">Rem</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">kts</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">EST</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">ACT</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">ETE</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">ATE</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">ETA</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">ATA</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">Used</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">Rem</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">FREQ</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">RADIAL</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium min-w-[60px] sm:min-w-[80px]">ID</th>
-                <th className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {checkpoints.map((checkpoint, index) => (
-                <tr key={checkpoint.id} className={`hover:bg-red-700/10 dark:hover:bg-red-700/10 transition-colors ${
-                  index % 2 === 0 ? 'bg-zinc-950 dark:bg-zinc-950' : 'bg-black dark:bg-black'
-                }`}>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2">
-                    <input
-                      type="text"
-                      value={checkpoint.name}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'name', e.target.value)}
-                      className="w-full min-w-[140px] p-1 sm:p-2 border-0 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-theme-accent dark:focus:ring-theme-accent-dark rounded"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 min-w-[70px]">
-                    <input
-                      type="number"
-                      value={checkpoint.trueCourse}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'trueCourse', e.target.value)}
-                      className="w-full p-1 sm:p-2 border-0 text-center text-xs sm:text-base rounded"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 min-w-[70px]">
-                    <input
-                      type="number"
-                      value={checkpoint.altitude}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'altitude', e.target.value)}
-                      className="w-full p-1 sm:p-2 border-0 text-center text-xs sm:text-base rounded"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 min-w-[70px]">
-                    <input
-                      type="number"
-                      value={checkpoint.windDirection}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'windDirection', e.target.value)}
-                      className="w-full p-1 sm:p-2 border-0 text-center text-xs sm:text-base rounded"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 min-w-[70px]">
-                    <input
-                      type="number"
-                      value={checkpoint.windVelocity}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'windVelocity', e.target.value)}
-                      className="w-full p-1 sm:p-2 border-0 text-center text-xs sm:text-base rounded"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 min-w-[70px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.temperature}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'temperature', e.target.value)}
-                      className="w-full p-1 sm:p-2 border-0 text-center text-xs sm:text-base rounded"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 min-w-[70px]">
-                    <input
-                      type="number"
-                      value={checkpoint.planTAS}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'planTAS', e.target.value)}
-                      className="w-full p-1 sm:p-2 border-0 text-center text-xs sm:text-base rounded"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-1 sm:p-2 min-w-[70px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.windCorrection}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'windCorrection', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
+              <table className="w-full border-collapse text-xs sm:text-sm min-w-[2100px] bg-slate-950/90">
+                <thead>
+                  <tr className="bg-slate-900 text-slate-200 border-b border-slate-800">
+                    <th className="border border-slate-800 p-2.5 text-center text-xs font-semibold min-w-[150px]" rowSpan={2}>Waypoint / Fix</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold" colSpan={2}>Planned Course</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold" colSpan={2}>Aloft Wind</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold min-w-[70px]">OAT</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold min-w-[75px]">Plan TAS</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold text-sky-400 min-w-[75px]">WCA</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold text-sky-400 min-w-[75px]">True HDG</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold min-w-[75px]">Mag Var</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold text-sky-400 min-w-[75px]">Mag HDG</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold min-w-[75px]">Dev</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold text-sky-400 min-w-[80px]">Comp HDG</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold" colSpan={2}>Distance (NM)</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold text-sky-400 min-w-[75px]">GS</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold" colSpan={2}>Clock Time</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold" colSpan={2}>Duration (min)</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold" colSpan={2}>Arrival</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold" colSpan={2}>Fuel (gal)</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold" colSpan={3}>NAVAID / VOR</th>
+                    <th className="border border-slate-800 p-2 text-center text-xs font-semibold min-w-[50px]" rowSpan={2}>Del</th>
+                  </tr>
+                  <tr className="bg-slate-900/70 text-slate-400 border-b border-slate-800 text-[11px]">
+                    <th className="border border-slate-800 p-1.5 text-center">TC (°)</th>
+                    <th className="border border-slate-800 p-1.5 text-center">ALT (ft)</th>
+                    <th className="border border-slate-800 p-1.5 text-center">DIR (°)</th>
+                    <th className="border border-slate-800 p-1.5 text-center">VEL (kt)</th>
+                    <th className="border border-slate-800 p-1.5 text-center">°C</th>
+                    <th className="border border-slate-800 p-1.5 text-center">kts</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">-L / +R</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">°T</th>
+                    <th className="border border-slate-800 p-1.5 text-center">-E / +W</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">°M</th>
+                    <th className="border border-slate-800 p-1.5 text-center">±°</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">°C</th>
+                    <th className="border border-slate-800 p-1.5 text-center">Leg</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">Rem</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">kts</th>
+                    <th className="border border-slate-800 p-1.5 text-center">EST</th>
+                    <th className="border border-slate-800 p-1.5 text-center">ACT</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">ETE</th>
+                    <th className="border border-slate-800 p-1.5 text-center">ATE</th>
+                    <th className="border border-slate-800 p-1.5 text-center">ETA</th>
+                    <th className="border border-slate-800 p-1.5 text-center">ATA</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">Used</th>
+                    <th className="border border-slate-800 p-1.5 text-center text-sky-400">Rem</th>
+                    <th className="border border-slate-800 p-1.5 text-center">FREQ</th>
+                    <th className="border border-slate-800 p-1.5 text-center">RAD</th>
+                    <th className="border border-slate-800 p-1.5 text-center">ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {checkpoints.map((checkpoint, index) => (
+                    <tr
+                      key={checkpoint.id}
+                      className={`hover:bg-slate-900/60 transition-colors ${
+                        index % 2 === 0 ? 'bg-slate-950/80' : 'bg-slate-900/30'
                       }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.trueHeading}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'trueHeading', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.variation}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'variation', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.magHeading}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'magHeading', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.deviation}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'deviation', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.compassHeading}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'compassHeading', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.distance}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'distance', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.remaining}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'remaining', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      value={checkpoint.groundSpeed}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'groundSpeed', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[120px]">
-                    <input
-                      type="text"
-                      value={checkpoint.est}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'est', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                      placeholder="HH:MM"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[120px]">
-                    <input
-                      type="text"
-                      value={checkpoint.act}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'act', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                      placeholder="HH:MM"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.ete}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'ete', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.ate}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'ate', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[120px]">
-                    <input
-                      type="text"
-                      value={checkpoint.eta}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'eta', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                      placeholder="HH:MM"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[120px]">
-                    <input
-                      type="text"
-                      value={checkpoint.ata}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'ata', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                      placeholder="HH:MM"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.fuelUsed}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'fuelUsed', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={checkpoint.fuelRemaining}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'fuelRemaining', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[120px]">
-                    <input
-                      type="text"
-                      value={checkpoint.vorFreq}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'vorFreq', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                      placeholder="113.00"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[120px]">
-                    <input
-                      type="text"
-                      value={checkpoint.vorRadial}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'vorRadial', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                      placeholder="090"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 min-w-[100px]">
-                    <input
-                      type="text"
-                      value={checkpoint.vorIdent}
-                      onChange={(e) => updateCheckpoint(checkpoint.id, 'vorIdent', e.target.value)}
-                      className={`w-full p-2 border-0 bg-transparent text-center text-base ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}
-                      placeholder="ABC"
-                    />
-                  </td>
-                  <td className="border border-zinc-800/20 dark:border-zinc-800/20 p-2 text-center">
-                    {checkpoints.length > 2 && (
-                      <button
-                        onClick={() => removeCheckpoint(checkpoint.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="bg-red-700 dark:bg-red-700 text-white font-bold">
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3 text-center text-sm font-bold" colSpan={15}>TOTALS</td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3 text-center text-sm font-bold">{totalDistance.toFixed(1)} nm</td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3 text-center text-sm font-bold">{Math.floor(totalETE / 60)}h {totalETE % 60}m</td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3 text-center text-sm font-bold">{totalFuelUsed.toFixed(1)} gal</td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-                <td className="border border-zinc-800/30 dark:border-zinc-800/30 p-3"></td>
-              </tr>
-            </tfoot>
-          </table>
+                    >
+                      <td className="border border-slate-800/80 p-1.5">
+                        <input
+                          type="text"
+                          value={checkpoint.name}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'name', e.target.value)}
+                          className="w-full min-w-[140px] p-1.5 border border-slate-800 bg-slate-950 text-slate-100 text-xs font-semibold rounded"
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          value={checkpoint.trueCourse}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'trueCourse', e.target.value)}
+                          placeholder="090"
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="number"
+                          value={checkpoint.altitude}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'altitude', e.target.value)}
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          value={checkpoint.windDirection}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'windDirection', e.target.value)}
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          value={checkpoint.windVelocity}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'windVelocity', e.target.value)}
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[70px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.temperature}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'temperature', e.target.value)}
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          value={checkpoint.planTAS}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'planTAS', e.target.value)}
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.windCorrection}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'windCorrection', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.trueHeading}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'trueHeading', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.variation}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'variation', e.target.value)}
+                          placeholder="0"
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.magHeading}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'magHeading', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.deviation}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'deviation', e.target.value)}
+                          placeholder="0"
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.compassHeading}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'compassHeading', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.distance}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'distance', e.target.value)}
+                          placeholder="25.0"
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.remaining}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'remaining', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[75px]">
+                        <input
+                          type="number"
+                          value={checkpoint.groundSpeed}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'groundSpeed', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[90px]">
+                        <input
+                          type="text"
+                          value={checkpoint.est}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'est', e.target.value)}
+                          className={cellInputClass}
+                          placeholder="HH:MM"
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[90px]">
+                        <input
+                          type="text"
+                          value={checkpoint.act}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'act', e.target.value)}
+                          className={cellInputClass}
+                          placeholder="HH:MM"
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.ete}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'ete', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.ate}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'ate', e.target.value)}
+                          className={cellInputClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[90px]">
+                        <input
+                          type="text"
+                          value={checkpoint.eta}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'eta', e.target.value)}
+                          className={cellInputClass}
+                          placeholder="HH:MM"
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[90px]">
+                        <input
+                          type="text"
+                          value={checkpoint.ata}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'ata', e.target.value)}
+                          className={cellInputClass}
+                          placeholder="HH:MM"
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.fuelUsed}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'fuelUsed', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={checkpoint.fuelRemaining}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'fuelRemaining', e.target.value)}
+                          className={computedCellClass}
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[90px]">
+                        <input
+                          type="text"
+                          value={checkpoint.vorFreq}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'vorFreq', e.target.value)}
+                          className={cellInputClass}
+                          placeholder="115.70"
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="text"
+                          value={checkpoint.vorRadial}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'vorRadial', e.target.value)}
+                          className={cellInputClass}
+                          placeholder="090"
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 min-w-[80px]">
+                        <input
+                          type="text"
+                          value={checkpoint.vorIdent}
+                          onChange={(e) => updateCheckpoint(checkpoint.id, 'vorIdent', e.target.value)}
+                          className={cellInputClass}
+                          placeholder="PBI"
+                        />
+                      </td>
+                      <td className="border border-slate-800/80 p-1.5 text-center">
+                        {checkpoints.length > 2 && (
+                          <button
+                            onClick={() => removeCheckpoint(checkpoint.id)}
+                            className="text-slate-500 hover:text-rose-400 p-1 transition"
+                            title="Remove waypoint"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-slate-900 text-slate-100 font-bold border-t border-slate-700">
+                    <td className="border border-slate-800 p-2.5 text-center text-xs uppercase tracking-wider text-slate-400" colSpan={13}>
+                      Route Totals
+                    </td>
+                    <td className="border border-slate-800 p-2.5 text-center font-mono text-sky-400">{totalDistance.toFixed(1)} nm</td>
+                    <td className="border border-slate-800 p-2.5" colSpan={4}></td>
+                    <td className="border border-slate-800 p-2.5 text-center font-mono text-sky-400">
+                      {Math.floor(totalETE / 60)}h {Math.round(totalETE % 60)}m
+                    </td>
+                    <td className="border border-slate-800 p-2.5" colSpan={3}></td>
+                    <td className="border border-slate-800 p-2.5 text-center font-mono text-sky-400">{totalFuelUsed.toFixed(1)} gal</td>
+                    <td className="border border-slate-800 p-2.5" colSpan={5}></td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </div>
         </div>
 
         {/* Summary Section */}
-        <div className={`mt-8 p-6 rounded-xl shadow-lg ${darkMode ? 'bg-zinc-950 border border-zinc-800' : 'bg-zinc-950 border border-zinc-800'}`}>
-          <h4 className="font-bold mb-6 text-xl text-zinc-100 dark:text-zinc-100">Flight Summary</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-            <div className={`p-4 rounded-lg shadow-sm border ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-950 border-zinc-800'}`}>
-              <div className="text-xs text-zinc-400 dark:text-zinc-400 uppercase tracking-wide">Total Distance</div>
-              <div className="text-lg font-bold text-theme-accent dark:text-theme-accent-dark">{totalDistance.toFixed(1)} nm</div>
+        <div className="mt-6 p-5 rounded-xl border border-slate-800 bg-slate-950/60">
+          <h4 className="font-semibold uppercase tracking-wider text-xs text-slate-400 mb-4">Navigation & Fuel Endurance Summary</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider">Total Distance</div>
+              <div className="text-lg font-bold font-mono text-sky-400 mt-0.5">{totalDistance.toFixed(1)} nm</div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm border ${darkMode ? 'bg-zinc-950 border-gray-500' : 'bg-zinc-950 border-gray-200'}`}>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Flight Time</div>
-              <div className="text-lg font-bold text-theme-accent dark:text-theme-accent-dark">{Math.floor(totalETE / 60)}h {(totalETE % 60).toFixed(0)}m</div>
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider">Total Time En Route</div>
+              <div className="text-lg font-bold font-mono text-sky-400 mt-0.5">{Math.floor(totalETE / 60)}h {(totalETE % 60).toFixed(0)}m</div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm border ${darkMode ? 'bg-zinc-950 border-gray-500' : 'bg-zinc-950 border-gray-200'}`}>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Fuel Required</div>
-              <div className="text-lg font-bold text-theme-accent dark:text-theme-accent-dark">{totalFuelUsed.toFixed(1)} gal</div>
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider">Trip Fuel Required</div>
+              <div className="text-lg font-bold font-mono text-sky-400 mt-0.5">{totalFuelUsed.toFixed(1)} gal</div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm border ${darkMode ? 'bg-zinc-950 border-gray-500' : 'bg-zinc-950 border-gray-200'}`}>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Fuel on Board</div>
-              <div className="text-lg font-bold text-theme-accent dark:text-theme-accent-dark">{flightInfo.fuelOnBoard || '---'} gal</div>
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider">Usable Fuel on Board</div>
+              <div className="text-lg font-bold font-mono text-slate-100 mt-0.5">{flightInfo.fuelOnBoard || '---'} gal</div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm border ${darkMode ? 'bg-zinc-950 border-gray-500' : 'bg-zinc-950 border-gray-200'}`}>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Fuel Reserve</div>
-              <div className={`text-lg font-bold ${
-                flightInfo.fuelOnBoard && (parseFloat(flightInfo.fuelOnBoard) - totalFuelUsed) < 10 
-                  ? 'text-red-600 dark:text-red-400' 
-                  : 'text-theme-accent dark:text-theme-accent-dark'
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider">Landing Fuel Reserve</div>
+              <div className={`text-lg font-bold font-mono mt-0.5 ${
+                flightInfo.fuelOnBoard && (parseFloat(flightInfo.fuelOnBoard) - totalFuelUsed) < (burnRateDefault * 0.75)
+                  ? 'text-rose-400'
+                  : 'text-emerald-400'
               }`}>
-                {flightInfo.fuelOnBoard ? 
-                Math.max(0, parseFloat(flightInfo.fuelOnBoard) - totalFuelUsed).toFixed(1) : '---'} gal
+                {flightInfo.fuelOnBoard
+                  ? Math.max(0, parseFloat(flightInfo.fuelOnBoard) - totalFuelUsed).toFixed(1)
+                  : '---'} gal
               </div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm border ${darkMode ? 'bg-zinc-950 border-gray-500' : 'bg-zinc-950 border-gray-200'}`}>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Reserve Time</div>
-              <div className="text-lg font-bold text-theme-accent dark:text-theme-accent-dark">{
-                flightInfo.fuelOnBoard && totalFuelUsed > 0 && totalETE > 0 ?
-                Math.floor(Math.max(0, ((parseFloat(flightInfo.fuelOnBoard) - totalFuelUsed) / (totalFuelUsed / totalETE)) * 60)) : '---'
-              } min</div>
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider">Reserve Endurance</div>
+              <div className="text-lg font-bold font-mono text-slate-100 mt-0.5">
+                {flightInfo.fuelOnBoard && burnRateDefault > 0
+                  ? `${Math.floor(Math.max(0, ((parseFloat(flightInfo.fuelOnBoard) - totalFuelUsed) / burnRateDefault) * 60))} min`
+                  : '---'}
+              </div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm border ${darkMode ? 'bg-zinc-950 border-gray-500' : 'bg-zinc-950 border-gray-200'}`}>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Average Ground Speed</div>
-              <div className="text-lg font-bold text-theme-accent dark:text-theme-accent-dark">{
-                totalDistance > 0 && totalETE > 0 ? 
-                (totalDistance / (totalETE / 60)).toFixed(0) : '---'
-              } kts</div>
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider">Average Ground Speed</div>
+              <div className="text-lg font-bold font-mono text-slate-100 mt-0.5">
+                {totalDistance > 0 && totalETE > 0
+                  ? `${(totalDistance / (totalETE / 60)).toFixed(0)} kts`
+                  : '---'}
+              </div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm border ${darkMode ? 'bg-zinc-950 border-gray-500' : 'bg-zinc-950 border-gray-200'}`}>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Fuel Burn Rate</div>
-              <div className="text-lg font-bold text-theme-accent dark:text-theme-accent-dark">{
-                totalDistance > 0 && totalFuelUsed > 0 && totalETE > 0 ?
-                (totalFuelUsed / (totalDistance / (totalETE / 60))).toFixed(2) : '---'
-              } gal/hr</div>
+            <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80">
+              <div className="text-[11px] text-slate-400 uppercase tracking-wider">Planned Burn Rate</div>
+              <div className="text-lg font-bold font-mono text-slate-100 mt-0.5">
+                {burnRateDefault.toFixed(1)} gal/hr
+              </div>
             </div>
           </div>
         </div>
 
         {/* Instructions Section */}
-        <div className={`mt-6 sm:mt-8 rounded-lg border ${darkMode ? 'bg-zinc-950 border-zinc-800/30' : 'bg-zinc-950 border-zinc-800/30'}`}>
+        <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950/60">
           <button
             onClick={() => setInstructionsOpen(!instructionsOpen)}
-            className="w-full p-4 sm:p-6 flex items-center justify-between text-left"
+            className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-900/40 transition rounded-xl"
           >
-            <h4 className="font-semibold text-base sm:text-xl text-zinc-100 dark:text-zinc-100">Flight Planning Instructions</h4>
-            <span className="text-2xl">{instructionsOpen ? '−' : '+'}</span>
+            <h4 className="font-semibold text-sm text-slate-200">VFR Cross-Country Navigation Log Reference</h4>
+            <span className="text-lg font-mono text-sky-400">{instructionsOpen ? '−' : '+'}</span>
           </button>
-          
+
           {instructionsOpen && (
-            <div className="px-4 pb-4 sm:px-6 sm:pb-6">
-
-          <div className="space-y-4 sm:space-y-6">
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'}`}>
-              <h5 className="font-semibold mb-3 text-lg text-zinc-100 dark:text-zinc-100">1. Getting Started - Distance & Route Planning</h5>
-              <div className="space-y-2 text-sm">
-                <p><strong>Using Sectional Charts:</strong> Measure distance between airports using the scale at the bottom of the chart. Use a plotter or ruler for accuracy.</p>
-                <p><strong>Using ForeFlight:</strong> Enter departure and destination airports, then use the route planner to get accurate distances and suggested checkpoints.</p>
-                <p><strong>Using EFB Route Analysis:</strong> Create a flight plan, then use the route analysis to get precise distances and recommended waypoints.</p>
-                <p><strong>Checkpoint Selection:</strong> Choose checkpoints every 20-30 minutes of flight time, preferably at VOR stations, airports, or prominent landmarks for flight following.</p>
-              </div>
-            </div>
-
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'}`}>
-              <h5 className="font-semibold mb-3 text-lg text-zinc-100 dark:text-zinc-100">2. Filling Out the Table - Step by Step</h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <h6 className="font-medium mb-2">Basic Information:</h6>
-                  <ul className="space-y-1 list-disc list-inside">
-                    <li>Enter aircraft type and tail number</li>
-                    <li>Add fuel on board (from aircraft manual)</li>
-                    <li>Enter pilot name</li>
-                  </ul>
-                </div>
-                <div>
-                  <h6 className="font-medium mb-2">Route Setup:</h6>
-                  <ul className="space-y-1 list-disc list-inside">
-                    <li>Add checkpoints using the "+" button</li>
-                    <li>Enter checkpoint names (VOR IDs, airports, etc.)</li>
-                    <li>Enter leg distances from your planning tool</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'}`}>
-              <h5 className="font-semibold mb-3 text-lg text-zinc-100 dark:text-zinc-100">3. Navigation Calculations</h5>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <h6 className="font-medium mb-1">True Course (TC):</h6>
-                  <p>From sectional chart or flight planning software - the magnetic course corrected for wind to get true course.</p>
-                </div>
-                <div>
-                  <h6 className="font-medium mb-1">Altitude:</h6>
-                  <p>Planned cruising altitude for each leg. Consider terrain, airspace, and weather.</p>
-                </div>
-                <div>
-                  <h6 className="font-medium mb-1">Wind Information:</h6>
-                  <p>From aviation weather reports (TAF/METAR) or flight planning services.</p>
-                </div>
-                <div>
-                  <h6 className="font-medium mb-1">Plan TAS:</h6>
-                  <p>True Airspeed from aircraft manual at planned altitude and temperature.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'}`}>
-              <h5 className="font-semibold mb-3 text-lg text-zinc-100 dark:text-zinc-100">4. Using the CX-6 Flight Computer</h5>
-              <div className="space-y-2 text-sm">
-                <p><strong>Wind Correction Angle (WCA):</strong> Use CX-6 to calculate wind correction from true course, wind direction/velocity, and TAS.</p>
-                <p><strong>True Heading:</strong> TC + WCA = True Heading</p>
-                <p><strong>Magnetic Heading:</strong> True Heading ± Variation (from sectional chart)</p>
-                <p><strong>Compass Heading:</strong> Magnetic Heading ± Deviation (from aircraft compass card)</p>
-                <p><strong>Ground Speed:</strong> Use CX-6 with TAS, wind velocity, and WCA</p>
-                <p><strong>ETE (Estimated Time En Route):</strong> Distance ÷ Ground Speed × 60 = ETE in minutes</p>
-              </div>
-            </div>
-
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'}`}>
-              <h5 className="font-semibold mb-3 text-lg text-zinc-100 dark:text-zinc-100">5. Manual Calculations (Alternative Method)</h5>
-              <div className="space-y-2 text-sm">
-                <p><strong>E6-B Flight Computer Procedures</strong></p>
-                <p><strong>Wind Triangle Solution:</strong></p>
-                <ul className="ml-4 space-y-1">
-                  <li>• Set True Course on outer scale</li>
-                  <li>• Align wind direction arrow with wind velocity</li>
-                  <li>• Read wind correction angle and ground speed</li>
-                  <li>• True Heading = True Course + Wind Correction Angle</li>
-                </ul>
-
-                <p><strong>Ground Speed Formula:</strong> GS = TAS + Wind Component</p>
-                <ul className="ml-4 space-y-1">
-                  <li>• Headwind component = - (subtracts from TAS)</li>
-                  <li>• Tailwind component = + (adds to TAS)</li>
-                  <li>• Crosswind component affects heading but not speed</li>
-                </ul>
-
-                <p><strong>Time Calculations:</strong></p>
-                <ul className="ml-4 space-y-1">
-                  <li>• ETE = Distance ÷ Ground Speed × 60 (minutes)</li>
-                  <li>• ETA = Departure Time + ETE</li>
-                  <li>• Always convert to consistent units (NM, knots, minutes)</li>
-                </ul>
-
-                <p><strong>Fuel Calculations:</strong></p>
-                <ul className="ml-4 space-y-1">
-                  <li>• Fuel Burn Rate from POH (gallons per hour)</li>
-                  <li>• Trip Fuel = Burn Rate × (ETE ÷ 60)</li>
-                  <li>• Reserve Fuel = 45 minutes (VFR) or 45 minutes (IFR)</li>
-                  <li>• Total Fuel Required = Trip Fuel + Reserve + Taxi Fuel</li>
-                </ul>
-
-                <p><strong>E6-B Computer Scale Usage:</strong></p>
-                <ul className="ml-4 space-y-1">
-                  <li>• A Scale (Minutes): Time/speed/distance conversions, Fuel consumption calculations</li>
-                  <li>• B Scale (Hours): Long-range flight planning, Endurance calculations</li>
-                  <li>• C Scale (Wind): Wind triangle solutions, Ground speed calculations</li>
-                  <li>• D Scale (Rate): Climb/descent rates, Fuel flow rates</li>
-                </ul>
-
-                <p><strong>Cross-Check Digital vs Manual:</strong> Always verify digital calculations with manual E6-B results. If they differ by more than 5%, investigate the discrepancy before flight.</p>
-              </div>
-            </div>
-
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'}`}>
-              <h5 className="font-semibold mb-3 text-lg text-zinc-100 dark:text-zinc-100">6. VOR Navigation Setup</h5>
-              <div className="space-y-2 text-sm">
-                <p><strong>VOR Frequency:</strong> From sectional chart or airport/facility directory</p>
-                <p><strong>VOR Radial:</strong> The radial FROM the VOR station to your position</p>
-                <p><strong>VOR Identifier:</strong> 3-letter code for the VOR station (e.g., LAX, PSP)</p>
-                <p><strong>Usage:</strong> Set up VOR navigation for flight following and position reporting</p>
-              </div>
-            </div>
-
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'}`}>
-              <h5 className="font-semibold mb-3 text-lg text-zinc-100 dark:text-zinc-100">7. In-Flight Updates</h5>
-              <div className="space-y-2 text-sm">
-                <p><strong>Actual Times:</strong> Update ACT, ATA, and ATE columns during flight</p>
-                <p><strong>Fuel Remaining:</strong> Track actual fuel burn vs. planned</p>
-                <p><strong>Position Reports:</strong> Use checkpoints for ATC position reports</p>
-                <p><strong>Weather Updates:</strong> Adjust calculations if wind or weather changes</p>
-              </div>
-            </div>
-
-            <div className={`p-4 rounded-lg ${darkMode ? 'bg-zinc-950' : 'bg-zinc-950'}`}>
-              <h5 className="font-semibold mb-3 text-lg text-zinc-100 dark:text-zinc-100">8. Safety Considerations</h5>
-              <div className="space-y-2 text-sm">
-                <p><strong>Fuel Reserves:</strong> Always plan for VFR Day (45 min), VFR Night (45 min), or IFR (45 min) reserves</p>
-                <p><strong>Alternate Airports:</strong> Plan for weather contingencies</p>
-                <p><strong>Checkpoint Spacing:</strong> Ensure checkpoints are within gliding distance in emergency</p>
-                <p><strong>Cross-Check Calculations:</strong> Verify all calculations using multiple methods</p>
-              </div>
-            </div>
-          </div>
+            <div className="px-4 pb-4 space-y-3 text-xs text-slate-300 border-t border-slate-800 pt-4">
+              <p>
+                <strong>1. Wind Triangle Automation:</strong> Entering True Course (<code className="text-sky-400">TC</code>), Planned True Airspeed (<code className="text-sky-400">Plan TAS</code>), and Wind (<code className="text-sky-400">DIR / VEL</code>) invokes <code className="text-sky-400">AviationMath.calculateWCA</code> to solve Wind Correction Angle, True Heading, and Ground Speed.
+              </p>
+              <p>
+                <strong>2. Magnetic & Compass Headings:</strong> Enter local Magnetic Variation (<code className="text-sky-400">-E / +W</code>) from your VFR sectional isogonic line and aircraft compass card Deviation to obtain Magnetic and Compass Headings.
+              </p>
+              <p>
+                <strong>3. ETE & FAR 91.151 Fuel Reserves:</strong> Entering leg distance computes leg ETE and fuel burn using your active Hangar airframe profile ({burnRateDefault} GPH). Landing fuel reserve highlights in rose if remaining endurance falls below 45 minutes.
+              </p>
             </div>
           )}
         </div>

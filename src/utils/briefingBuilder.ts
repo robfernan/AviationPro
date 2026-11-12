@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf';
-import { AircraftProfile } from './indexedDB';
 
 interface BriefingData {
   date: string;
