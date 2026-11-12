@@ -591,43 +591,131 @@ const FlightLogs: React.FC<FlightLogsProps> = () => {
           )}
         </div>
 
-        {flightLogs.length > 0 && (
-          <div className="mt-6 p-5 bg-slate-950/60 border border-slate-800 rounded-xl">
-            <h4 className="text-xs font-semibold uppercase tracking-wider mb-4 text-slate-400">Logbook Totals & Experience Breakdown</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Total Flights</div>
-                <div className="font-bold font-mono text-xl text-slate-100">{flightLogs.length}</div>
-              </div>
-              <div className="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Total Hours</div>
-                <div className="font-bold font-mono text-xl text-sky-400">{totalFlightTime.toFixed(1)}</div>
-              </div>
-              <div className="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Avg Flight Duration</div>
-                <div className="font-bold font-mono text-xl text-slate-100">{averageFlightTime.toFixed(1)} hr</div>
-              </div>
-              <div className="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Unique Airframes</div>
-                <div className="font-bold font-mono text-xl text-slate-100">{uniqueAircraftCount}</div>
-              </div>
+        {/* FAR 61.109 Private Pilot Minimums & 90-Day Recency Tracker */}
+        <div className="mt-6 p-4 sm:p-5 bg-slate-950/60 border border-slate-800 rounded-xl space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-sky-400">
+                FAA FAR 61.109 Aeronautical Experience & 90-Day Recency Tracker
+              </h4>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Live progress toward FAA Part 61 Private Pilot Airplane Single-Engine Land (ASEL) certificate minimums.
+              </p>
             </div>
-
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                { label: 'Night Flights', val: nightFlightCount, color: 'text-slate-200' },
-                { label: 'Cross Country', val: crossCountryCount, color: 'text-sky-400' },
-                { label: 'Solo PIC', val: soloFlightCount, color: 'text-emerald-400' },
-                { label: 'Dual Received', val: dualFlightCount, color: 'text-amber-400' }
-              ].map(stat => (
-                <div key={stat.label} className="flex justify-between items-center px-3 py-2 rounded-lg bg-slate-900/40 border border-slate-800/80">
-                  <span className="text-xs text-slate-400">{stat.label}</span>
-                  <span className={`font-mono font-bold text-sm ${stat.color}`}>{stat.val}</span>
+            {(() => {
+              const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+              const recentFlights90d = flightLogs.filter((l) => new Date(l.date).getTime() >= ninetyDaysAgo).length;
+              const recentNight90d = flightLogs.filter(
+                (l) => l.night && new Date(l.date).getTime() >= ninetyDaysAgo
+              ).length;
+              return (
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                  <span
+                    className={`px-2.5 py-1 rounded border font-semibold ${
+                      recentFlights90d >= 3
+                        ? 'bg-emerald-950/60 border-emerald-700/60 text-emerald-300'
+                        : 'bg-amber-950/60 border-amber-700/60 text-amber-300'
+                    }`}
+                  >
+                    90-Day Day Flights: {recentFlights90d}/3
+                  </span>
+                  <span
+                    className={`px-2.5 py-1 rounded border font-semibold ${
+                      recentNight90d >= 3
+                        ? 'bg-emerald-950/60 border-emerald-700/60 text-emerald-300'
+                        : 'bg-slate-900 border-slate-700 text-slate-300'
+                    }`}
+                  >
+                    90-Day Night Flights: {recentNight90d}/3
+                  </span>
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
-        )}
+
+          {(() => {
+            const dualHours = flightLogs
+              .filter((l) => l.dual)
+              .reduce((s, l) => s + (parseFloat(l.flightTime) || 0), 0);
+            const soloHours = flightLogs
+              .filter((l) => l.solo)
+              .reduce((s, l) => s + (parseFloat(l.flightTime) || 0), 0);
+            const xcDualHours = flightLogs
+              .filter((l) => l.crossCountry && l.dual)
+              .reduce((s, l) => s + (parseFloat(l.flightTime) || 0), 0);
+            const xcSoloHours = flightLogs
+              .filter((l) => l.crossCountry && l.solo)
+              .reduce((s, l) => s + (parseFloat(l.flightTime) || 0), 0);
+            const nightHours = flightLogs
+              .filter((l) => l.night)
+              .reduce((s, l) => s + (parseFloat(l.flightTime) || 0), 0);
+
+            const requirements = [
+              { label: 'Total Flight Time (FAR 61.109(a))', current: totalFlightTime, target: 40, unit: 'hr' },
+              { label: 'Dual Flight Training Received', current: dualHours, target: 20, unit: 'hr' },
+              { label: 'Solo Flight Time in ASEL', current: soloHours, target: 10, unit: 'hr' },
+              { label: 'Dual Cross-Country Training', current: xcDualHours, target: 3, unit: 'hr' },
+              { label: 'Solo Cross-Country Time', current: xcSoloHours, target: 5, unit: 'hr' },
+              { label: 'Night Training Time', current: nightHours, target: 3, unit: 'hr' },
+            ];
+
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {requirements.map((req) => {
+                  const pct = Math.min(100, Math.round((req.current / req.target) * 100));
+                  const complete = req.current >= req.target;
+                  return (
+                    <div key={req.label} className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="font-semibold text-slate-200 truncate">{req.label}</span>
+                        <span
+                          className={`font-mono font-bold shrink-0 ${
+                            complete ? 'text-emerald-400' : 'text-sky-400'
+                          }`}
+                        >
+                          {req.current.toFixed(1)} / {req.target} {req.unit}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                        <div
+                          className={`h-full transition-all ${complete ? 'bg-emerald-500' : 'bg-sky-500'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                        <span>{pct}% Complete</span>
+                        <span>
+                          {complete ? 'MINIMUM MET' : `${(req.target - req.current).toFixed(1)} hr remaining`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {flightLogs.length > 0 && (
+            <div className="pt-3 border-t border-slate-800 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Total Flights</div>
+                <div className="font-bold font-mono text-lg text-slate-100">{flightLogs.length}</div>
+              </div>
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Avg Duration</div>
+                <div className="font-bold font-mono text-lg text-slate-100">{averageFlightTime.toFixed(1)} hr</div>
+              </div>
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Unique Airframes</div>
+                <div className="font-bold font-mono text-lg text-slate-100">{uniqueAircraftCount}</div>
+              </div>
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">XC Flights</div>
+                <div className="font-bold font-mono text-lg text-sky-400">{crossCountryCount}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

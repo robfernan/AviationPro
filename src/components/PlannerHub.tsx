@@ -1,20 +1,22 @@
 import { useState } from 'react';
-import { Navigation, FileText, CheckSquare2 } from 'lucide-react';
+import { Navigation, FileText, CheckSquare2, ShieldAlert } from 'lucide-react';
 import FlightPlanForm from './FlightPlanForm';
 import Briefing from './Briefing';
 import Checklists from './Checklists';
+import FratAssessment from './FratAssessment';
 
 interface PlannerHubProps {
   darkMode: boolean;
 }
 
 const PlannerHub: React.FC<PlannerHubProps> = ({ darkMode }) => {
-  const [activePlannerTab, setActivePlannerTab] = useState<'flightplan' | 'briefing' | 'checklists'>('flightplan');
+  const [activePlannerTab, setActivePlannerTab] = useState<'flightplan' | 'briefing' | 'checklists' | 'frat'>('flightplan');
 
   const plannerTabs = [
     { id: 'flightplan', label: 'NavLog & Flight Planner', shortLabel: 'NavLog', icon: Navigation, component: FlightPlanForm },
     { id: 'briefing', label: 'Preflight Briefing PDF', shortLabel: 'Briefing PDF', icon: FileText, component: Briefing },
     { id: 'checklists', label: 'Checklists', shortLabel: 'Checklists', icon: CheckSquare2, component: Checklists },
+    { id: 'frat', label: 'PAVE / FRAT Risk Matrix', shortLabel: 'FRAT Risk', icon: ShieldAlert, component: FratAssessment },
   ];
 
   const ActiveComponent = plannerTabs.find((t) => t.id === activePlannerTab)?.component || FlightPlanForm;
@@ -22,7 +24,7 @@ const PlannerHub: React.FC<PlannerHubProps> = ({ darkMode }) => {
   return (
     <div className="w-full space-y-2.5 sm:space-y-4">
       {/* Planning Sub-tabs */}
-      <div className="grid grid-cols-3 sm:flex sm:flex-wrap bg-slate-900/90 border border-slate-800/80 rounded-lg p-1 gap-1 w-full sm:w-fit">
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap bg-slate-900/90 border border-slate-800/80 rounded-lg p-1 gap-1 w-full sm:w-fit">
         {plannerTabs.map((tab) => {
           const Icon = tab.icon;
           return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wind, Gauge, Clock, Fuel, Zap, Scale, Send, Copy, Check, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Wind, Gauge, Clock, Fuel, Zap, Scale, Send, Copy, Check, ShieldAlert, ShieldCheck, PlaneTakeoff, TrendingUp } from 'lucide-react';
 import { AviationMath } from '../core/aviationMath';
 import { useFlightStore } from '../core/flightStore';
 import { buildPreflightNotes, copyPreflightNotesToClipboard } from '../core/preflightNotes';
@@ -28,12 +28,14 @@ const CX6Calculator: React.FC<CX6CalculatorProps> = ({ darkMode }) => {
       {/* NAVIGATION BAR */}
       <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-900/90 border-b border-slate-800/80 px-2.5 py-1.5">
         <div className="flex flex-wrap items-center gap-1">
-          <TabBtn active={activeTab === 'WIND'} onClick={() => setActiveTab('WIND')} icon={<Wind size={14} />} label="WIND" />
-          <TabBtn active={activeTab === 'TAS'} onClick={() => setActiveTab('TAS')} icon={<Gauge size={14} />} label="TAS" />
-          <TabBtn active={activeTab === 'TSD'} onClick={() => setActiveTab('TSD')} icon={<Clock size={14} />} label="TSD" />
-          <TabBtn active={activeTab === 'FUEL'} onClick={() => setActiveTab('FUEL')} icon={<Fuel size={14} />} label="FUEL" />
-          <TabBtn active={activeTab === 'X-WIND'} onClick={() => setActiveTab('X-WIND')} icon={<Zap size={14} />} label="X-WIND" />
-          <TabBtn active={activeTab === 'WB'} onClick={() => setActiveTab('WB')} icon={<Scale size={14} />} label="W&B" />
+          <TabBtn active={activeTab === 'WIND'} onClick={() => setActiveTab('WIND')} icon={<Wind size={13} />} label="WIND" />
+          <TabBtn active={activeTab === 'TAS'} onClick={() => setActiveTab('TAS')} icon={<Gauge size={13} />} label="TAS" />
+          <TabBtn active={activeTab === 'TSD'} onClick={() => setActiveTab('TSD')} icon={<Clock size={13} />} label="TSD" />
+          <TabBtn active={activeTab === 'FUEL'} onClick={() => setActiveTab('FUEL')} icon={<Fuel size={13} />} label="FUEL" />
+          <TabBtn active={activeTab === 'X-WIND'} onClick={() => setActiveTab('X-WIND')} icon={<Zap size={13} />} label="X-WIND" />
+          <TabBtn active={activeTab === 'PERF'} onClick={() => setActiveTab('PERF')} icon={<PlaneTakeoff size={13} />} label="T/O & LDG" />
+          <TabBtn active={activeTab === 'CLIMB'} onClick={() => setActiveTab('CLIMB')} icon={<TrendingUp size={13} />} label="TOC/TOD" />
+          <TabBtn active={activeTab === 'WB'} onClick={() => setActiveTab('WB')} icon={<Scale size={13} />} label="W&B" />
         </div>
 
         <button
@@ -54,6 +56,8 @@ const CX6Calculator: React.FC<CX6CalculatorProps> = ({ darkMode }) => {
           {activeTab === 'TSD' && <TSDView />}
           {activeTab === 'FUEL' && <FuelView />}
           {activeTab === 'X-WIND' && <XWindView />}
+          {activeTab === 'PERF' && <TakeoffLandingPerformanceView />}
+          {activeTab === 'CLIMB' && <ClimbDescentView />}
 
           {activeTab === 'WB' && (
             <div className="animate-in fade-in zoom-in-95 duration-200">
@@ -371,6 +375,213 @@ const XWindView = () => {
   );
 };
 
+const TakeoffLandingPerformanceView = () => {
+  const flightStore = useFlightStore();
+  const maxW = flightStore.currentAircraft?.maxTakeoff || flightStore.currentAircraft?.maxWeight || 2550;
+  const [weightLbs, setWeightLbs] = useState(2400);
+  const [surface, setSurface] = useState<'PAVED' | 'GRASS'>('PAVED');
+  const [slopePercent, setSlopePercent] = useState(0);
+  const [availableRunwayFt, setAvailableRunwayFt] = useState(5000);
+  const [glideAltAglFt, setGlideAltAglFt] = useState(3500);
+
+  useEffect(() => {
+    const latestWB = localStorage.getItem('latest_wb_result');
+    if (latestWB) {
+      try {
+        const parsed = JSON.parse(latestWB);
+        if (parsed.takeoffWeight && Number.isFinite(Number(parsed.takeoffWeight))) {
+          setWeightLbs(Math.round(Number(parsed.takeoffWeight)));
+          return;
+        }
+      } catch {}
+    }
+    setWeightLbs(Math.round(maxW * 0.94));
+  }, [flightStore.selectedAircraftId, maxW]);
+
+  const paFt = flightStore.getPressureAltitude() ?? 0;
+  const daRes = flightStore.getDensityAltitude();
+  const xwRes = flightStore.getCrosswindComponent();
+  const headwindKt = xwRes.headwindKt ?? 0;
+  const tailwindKt = xwRes.tailwindKt ?? 0;
+
+  const perf = AviationMath.calculateTakeoffLandingPerformance({
+    aircraftId: flightStore.selectedAircraftId,
+    pressureAltitudeFt: paFt,
+    oatC: flightStore.temperatureC,
+    weightLbs,
+    maxWeightLbs: maxW,
+    headwindKt,
+    tailwindKt,
+    surface,
+    slopePercent,
+    availableRunwayFt,
+  });
+
+  const vSpeeds = AviationMath.calculateVSpeedsAndGlide({
+    actualWeightLbs: weightLbs,
+    maxWeightLbs: maxW,
+    vaAtMaxWeightKias: flightStore.selectedAircraftId === 'da40' ? 108 : flightStore.selectedAircraftId === 'pa28' ? 113 : 105,
+    bestGlideKias: flightStore.selectedAircraftId === 'da40' ? 72 : flightStore.selectedAircraftId === 'pa28' ? 76 : 68,
+    glideRatio: flightStore.selectedAircraftId === 'da40' ? 10.3 : 9.0,
+    altitudeAglFt: glideAltAglFt,
+    headwindKt: headwindKt - tailwindKt,
+  });
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <div>
+          <h3 className="text-sm font-bold text-slate-100">
+            POH Takeoff & Landing Distance Solver ({flightStore.currentAircraft?.name})
+          </h3>
+          <p className="text-xs text-slate-400">
+            Interpolates PA ({paFt} ft), DA ({daRes.exactFt ?? '--'} ft), OAT ({flightStore.temperatureC}°C), & Wind ({headwindKt > 0 ? `${headwindKt} kt HW` : tailwindKt > 0 ? `${tailwindKt} kt TW` : 'Calm'})
+          </p>
+        </div>
+        <div className="flex bg-slate-900 border border-slate-800 rounded-md p-0.5">
+          {(['PAVED', 'GRASS'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSurface(s)}
+              className={`px-3 py-1 text-[11px] font-semibold rounded transition-all ${
+                surface === s ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {s === 'PAVED' ? 'Paved Dry Rwy' : 'Dry Grass (+15%/45%)'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+        <Input label="Aircraft Weight" value={weightLbs} onChange={setWeightLbs} unit="LBS" />
+        <Input label="Available Runway" value={availableRunwayFt} onChange={setAvailableRunwayFt} unit="FT" />
+        <Input label="Uphill Slope" value={slopePercent} onChange={setSlopePercent} unit="%" />
+        <Input label="Cruise AGL (Glide)" value={glideAltAglFt} onChange={setGlideAltAglFt} unit="FT" />
+      </div>
+
+      {/* Takeoff & Landing Distance Readouts */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+        <Stat label="T/O Ground Roll" val={`${perf.takeoffGroundRollFt.toLocaleString()} FT`} color="text-sky-400" />
+        <Stat label="T/O 50-ft Obstacle" val={`${perf.takeoff50FtObstacleFt.toLocaleString()} FT`} color="text-sky-400" />
+        <Stat label="LDG Ground Roll" val={`${perf.landingGroundRollFt.toLocaleString()} FT`} />
+        <Stat label="LDG 50-ft Obstacle" val={`${perf.landing50FtObstacleFt.toLocaleString()} FT`} />
+      </div>
+
+      {/* Runway Consumption Bar & 50/70 Abort Rule */}
+      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="font-semibold text-slate-300">
+            Runway Safety Margin ({perf.runwayUsedPct}% of {availableRunwayFt.toLocaleString()} ft required for 50-ft obstacle)
+          </span>
+          <span
+            className={`px-2 py-0.5 rounded font-mono font-bold text-[11px] ${
+              perf.safetyMarginStatus === 'GO'
+                ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/60'
+                : perf.safetyMarginStatus === 'CAUTION'
+                ? 'bg-amber-950/80 text-amber-300 border border-amber-700/60'
+                : 'bg-rose-950/80 text-rose-300 border border-rose-700/60'
+            }`}
+          >
+            {perf.safetyMarginStatus === 'GO'
+              ? 'ADEQUATE MARGIN'
+              : perf.safetyMarginStatus === 'CAUTION'
+              ? 'CAUTION (>70% RWY)'
+              : 'INSUFFICIENT RUNWAY'}
+          </span>
+        </div>
+        <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+          <div
+            className={`h-full transition-all ${
+              perf.safetyMarginStatus === 'GO'
+                ? 'bg-emerald-500'
+                : perf.safetyMarginStatus === 'CAUTION'
+                ? 'bg-amber-500'
+                : 'bg-rose-500'
+            }`}
+            style={{ width: `${Math.min(100, perf.runwayUsedPct)}%` }}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 font-mono">
+          <span>50/70 Abort Rule: Reach {perf.target70PctVrKias} KIAS by {perf.abortPoint50PctFt.toLocaleString()} ft midpoint</span>
+          <span>Remaining Margin: {Math.max(0, availableRunwayFt - perf.takeoff50FtObstacleFt).toLocaleString()} ft</span>
+        </div>
+      </div>
+
+      {/* Weight-Adjusted V-Speeds & Glide Range */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+        <Stat label="Adjusted V_A (Maneuver)" val={`${vSpeeds.adjustedVaKias} KIAS`} color="text-emerald-400" />
+        <Stat label="Adjusted V_G (Glide)" val={`${vSpeeds.adjustedVgKias} KIAS`} />
+        <Stat label="Still-Air Glide" val={`${vSpeeds.stillAirGlideNm} NM`} />
+        <Stat label="Wind-Adj Glide" val={`${vSpeeds.windAdjustedGlideNm} NM`} color="text-sky-400" />
+      </div>
+    </div>
+  );
+};
+
+const ClimbDescentView = () => {
+  const flightStore = useFlightStore();
+  const [cruiseAltFt, setCruiseAltFt] = useState(6500);
+  const [patternAglFt, setPatternAglFt] = useState(1000);
+  const [climbKtas, setClimbKtas] = useState(78);
+  const [climbFpm, setClimbFpm] = useState(620);
+  const [climbGph, setClimbGph] = useState(11.5);
+  const [descentGsKt, setDescentGsKt] = useState(115);
+  const [descentFpm, setDescentFpm] = useState(500);
+
+  const xwRes = flightStore.getCrosswindComponent();
+  const headwindNet = (xwRes.headwindKt ?? 0) - (xwRes.tailwindKt ?? 0);
+
+  const profile = AviationMath.calculateClimbAndDescent({
+    departureElevFt: flightStore.fieldElevationFt,
+    cruiseAltitudeFt: cruiseAltFt,
+    patternAltitudeAglFt: patternAglFt,
+    climbSpeedKtas: climbKtas,
+    climbRateFpm: climbFpm,
+    climbFuelFlowGph: climbGph,
+    descentGroundspeedKt: descentGsKt,
+    descentRateFpm: descentFpm,
+    headwindComponentKt: headwindNet,
+  });
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-sm font-bold text-slate-100">Top-of-Climb (TOC) & Top-of-Descent (TOD) Planner</h3>
+        <p className="text-xs text-slate-400">
+          Calculate climb time, fuel burn (including 1.1 gal taxi allowance), TOC distance, and 3° glidepath TOD point.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <Input
+          label="Departure Elev"
+          value={flightStore.fieldElevationFt}
+          onChange={(v: number) => flightStore.setFieldElevation(v)}
+          unit="FT"
+        />
+        <Input label="Cruise Altitude" value={cruiseAltFt} onChange={setCruiseAltFt} unit="FT" />
+        <Input label="Climb Speed" value={climbKtas} onChange={setClimbKtas} unit="KTAS" />
+        <Input label="Climb Rate" value={climbFpm} onChange={setClimbFpm} unit="FPM" />
+        <Input label="Climb Fuel Flow" value={climbGph} onChange={setClimbGph} unit="GPH" />
+        <Input label="Descent GS" value={descentGsKt} onChange={setDescentGsKt} unit="KT" />
+        <Input label="Planned VS" value={descentFpm} onChange={setDescentFpm} unit="FPM" />
+        <Input label="Pattern Alt (AGL)" value={patternAglFt} onChange={setPatternAglFt} unit="FT" />
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-slate-900/90 border border-slate-800 rounded-xl p-5">
+        <Stat label="TOC Distance" val={`${profile.tocDistanceNm} NM`} color="text-sky-400" />
+        <Stat label="Time to Climb" val={`${profile.climbTimeMin} MIN`} />
+        <Stat label="Taxi + Climb Fuel" val={`${profile.climbFuelGal} GAL`} color="text-amber-400" />
+        <Stat label="TOD Distance" val={`${profile.todDistanceNm} NM`} color="text-emerald-400" />
+        <Stat label="Descent Duration" val={`${profile.descentTimeMin} MIN`} />
+        <Stat label="3° Glidepath Target VS" val={`-${profile.threeDegTargetVsFpm} FPM`} />
+      </div>
+    </div>
+  );
+};
+
 // --- Atomic UI Components ---
 
 const Input = ({ label, value, onChange, unit }: any) => (
@@ -391,14 +602,14 @@ const Input = ({ label, value, onChange, unit }: any) => (
 const Stat = ({ label, val, color = 'text-slate-100' }: any) => (
   <div className="text-center sm:text-left">
     <div className="text-[11px] text-slate-400 uppercase mb-1 font-semibold tracking-wider">{label}</div>
-    <div className={`text-2xl font-bold font-mono ${color} tracking-tight`}>{val}</div>
+    <div className={`text-xl sm:text-2xl font-bold font-mono ${color} tracking-tight`}>{val}</div>
   </div>
 );
 
 const TabBtn = ({ active, onClick, icon, label }: any) => (
   <button
     onClick={onClick}
-    className={`px-3.5 py-2 rounded-md flex items-center justify-center gap-2 text-xs font-semibold tracking-wide transition-all ${
+    className={`px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-md flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-semibold tracking-wide transition-all ${
       active
         ? 'bg-sky-600 text-white shadow-sm'
         : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70'

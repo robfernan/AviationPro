@@ -129,4 +129,70 @@ describe('AviationMath Core Unit Tests', () => {
     expect(AviationMath.calculateTSD(100, -10, 'speed')).toBeNull();
     expect(AviationMath.calculateFuel(-8.5, 2)).toBeNull();
   });
+
+  // --- Takeoff & Landing Distance Solver Tests ---
+  it('calculates C172S Sea-Level ISA POH takeoff and landing distances and applies grass/wind penalties', () => {
+    const seaLevelPaved = AviationMath.calculateTakeoffLandingPerformance({
+      aircraftId: 'c172',
+      pressureAltitudeFt: 0,
+      oatC: 15,
+      weightLbs: 2550,
+      maxWeightLbs: 2550,
+      headwindKt: 0,
+      tailwindKt: 0,
+      surface: 'PAVED',
+      slopePercent: 0,
+      availableRunwayFt: 5000,
+    });
+    expect(seaLevelPaved.takeoffGroundRollFt).toBe(960);
+    expect(seaLevelPaved.takeoff50FtObstacleFt).toBe(1685);
+    expect(seaLevelPaved.landingGroundRollFt).toBe(575);
+    expect(seaLevelPaved.safetyMarginStatus).toBe('GO');
+
+    // Grass runway adds +15% of ground roll to takeoff and +45% to landing
+    const seaLevelGrass = AviationMath.calculateTakeoffLandingPerformance({
+      aircraftId: 'c172',
+      pressureAltitudeFt: 0,
+      oatC: 15,
+      weightLbs: 2550,
+      maxWeightLbs: 2550,
+      headwindKt: 0,
+      tailwindKt: 0,
+      surface: 'GRASS',
+      slopePercent: 0,
+      availableRunwayFt: 5000,
+    });
+    expect(seaLevelGrass.takeoffGroundRollFt).toBeGreaterThan(seaLevelPaved.takeoffGroundRollFt);
+    expect(seaLevelGrass.landingGroundRollFt).toBeGreaterThan(seaLevelPaved.landingGroundRollFt);
+  });
+
+  // --- Climb (TOC), Descent (TOD) & Weight-Adjusted V-Speed Tests ---
+  it('calculates TOC/TOD profile and weight-adjusted V_A maneuvering speed', () => {
+    const climbDesc = AviationMath.calculateClimbAndDescent({
+      departureElevFt: 500,
+      cruiseAltitudeFt: 6500,
+      patternAltitudeAglFt: 1000,
+      climbSpeedKtas: 80,
+      climbRateFpm: 600,
+      climbFuelFlowGph: 12,
+      descentGroundspeedKt: 120,
+      descentRateFpm: 500,
+    });
+    expect(climbDesc.climbTimeMin).toBe(10.0);
+    expect(climbDesc.tocDistanceNm).toBe(13.3);
+    expect(climbDesc.descentTimeMin).toBe(10.0);
+    expect(climbDesc.todDistanceNm).toBe(20.0);
+
+    const vSpeeds = AviationMath.calculateVSpeedsAndGlide({
+      actualWeightLbs: 2100,
+      maxWeightLbs: 2550,
+      vaAtMaxWeightKias: 105,
+      bestGlideKias: 68,
+      glideRatio: 9.0,
+      altitudeAglFt: 6000,
+    });
+    expect(vSpeeds.adjustedVaKias).toBeLessThan(105);
+    expect(vSpeeds.stillAirGlideNm).toBeGreaterThan(8.5);
+  });
 });
+
