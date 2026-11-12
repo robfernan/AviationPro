@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useFlightStore } from '../core/flightStore';
 
 interface MetarSummary {
   raw: string;
@@ -6,19 +7,21 @@ interface MetarSummary {
   timeZulu: string;
   timeLocal: string;
   windSpeed: number;
+  windGust?: number;
   windDir: number;
   temp: number;
   altim: number;
+  elevFt: number;
   flightCategory: string;
 }
 
 const XC_STATIONS = [
-  { id: 'KDJT', name: 'Downtown Palm Beach' },
-  { id: 'KF45', name: 'North Palm Beach Co' },
-  { id: 'KIMM', name: 'Immokalee Regional' },
-  { id: 'KOBE', name: 'Okeechobee County' },
-  { id: 'KMIA', name: 'Miami International' },
-  { id: 'KFXE', name: 'Fort Lauderdale Exec' },
+  { id: 'KPBI', name: 'Palm Beach Intl', elevFt: 19 },
+  { id: 'KBCT', name: 'Boca Raton', elevFt: 13 },
+  { id: 'KF45', name: 'North Palm Beach Co', elevFt: 22 },
+  { id: 'KFXE', name: 'Fort Lauderdale Exec', elevFt: 13 },
+  { id: 'KIMM', name: 'Immokalee Regional', elevFt: 37 },
+  { id: 'KMIA', name: 'Miami International', elevFt: 9 },
 ];
 
 function parseMetarTime(raw?: string, reportTime?: string, obsTime?: number): { zulu: string; local: string } {
@@ -27,7 +30,15 @@ function parseMetarTime(raw?: string, reportTime?: string, obsTime?: number): { 
     const [, , hourStr, minStr] = zMatch;
     const zulu = `${hourStr}:${minStr}Z`;
     const now = new Date();
-    const utcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), parseInt(zMatch[1], 10), parseInt(hourStr, 10), parseInt(minStr, 10)));
+    const utcDate = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        parseInt(zMatch[1], 10),
+        parseInt(hourStr, 10),
+        parseInt(minStr, 10)
+      )
+    );
     const local = utcDate.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -57,9 +68,11 @@ interface TelemetryRibbonProps {
 }
 
 export default function AviationTelemetryRibbon({ onSelectWeatherTab }: TelemetryRibbonProps) {
-  const [selectedStation, setSelectedStation] = useState<string>('KF45');
+  const flightStore = useFlightStore();
+  const [selectedStation, setSelectedStation] = useState<string>('KPBI');
   const [stationData, setStationData] = useState<Record<string, MetarSummary>>({});
   const [loading, setLoading] = useState(true);
+  const [syncedBadge, setSyncedBadge] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -73,6 +86,7 @@ export default function AviationTelemetryRibbon({ onSelectWeatherTab }: Telemetr
         if (isMounted && Array.isArray(data) && data.length > 0) {
           const map: Record<string, MetarSummary> = {};
           for (const item of data) {
+            const stnMeta = XC_STATIONS.find((s) => s.id === item.icaoId);
             const timeInfo = parseMetarTime(item.rawOb, item.reportTime, item.obsTime);
             map[item.icaoId] = {
               raw: item.rawOb || 'METAR UNAVAILABLE',
@@ -80,9 +94,11 @@ export default function AviationTelemetryRibbon({ onSelectWeatherTab }: Telemetr
               timeZulu: timeInfo.zulu,
               timeLocal: timeInfo.local,
               windSpeed: item.wspd ?? 0,
-              windDir: item.wdir ?? 0,
-              temp: item.temp ?? 20,
-              altim: item.altim ? item.altim / 33.8639 : 29.92,
+              windGust: item.wgst ?? undefined,
+              windDir: item.wdir ?? 360,
+              temp: item.temp ?? 25,
+              altim: item.altim ? Number((item.altim / 33.8639).toFixed(2)) : 29.92,
+              elevFt: stnMeta?.elevFt ?? 19,
               flightCategory: (item.fltcat || 'VFR').toUpperCase(),
             };
           }
@@ -92,15 +108,17 @@ export default function AviationTelemetryRibbon({ onSelectWeatherTab }: Telemetr
       } catch {
         if (isMounted) {
           setStationData({
-            KF45: {
-              raw: 'KF45 191253Z AUTO 09009KT 10SM CLR 24/18 A3002 RMK AO2',
-              station: 'KF45',
-              timeZulu: '12:53Z',
-              timeLocal: '8:53 AM',
-              windSpeed: 9,
-              windDir: 90,
-              temp: 24,
-              altim: 30.02,
+            KPBI: {
+              raw: 'KPBI 121653Z 12012G18KT 10SM FEW035 25/18 A2992 RMK AO2',
+              station: 'KPBI',
+              timeZulu: '16:53Z',
+              timeLocal: '11:53 AM',
+              windSpeed: 12,
+              windGust: 18,
+              windDir: 120,
+              temp: 25,
+              altim: 29.92,
+              elevFt: 19,
               flightCategory: 'VFR',
             },
           });
@@ -118,104 +136,137 @@ export default function AviationTelemetryRibbon({ onSelectWeatherTab }: Telemetr
   }, []);
 
   const activeData = stationData[selectedStation] || {
-    raw: 'AWAITING TELEMETRY...',
+    raw: `${selectedStation} 121653Z 12012G18KT 10SM FEW035 25/18 A2992`,
     station: selectedStation,
-    timeZulu: '--:--Z',
-    timeLocal: '--:--',
-    windSpeed: 0,
-    windDir: 0,
-    temp: 0,
-    altim: 29.92,
+    timeZulu: '16:53Z',
+    timeLocal: '11:53 AM',
+    windSpeed: flightStore.windSpeed,
+    windGust: flightStore.windGust,
+    windDir: flightStore.windDirection,
+    temp: flightStore.temperatureC,
+    altim: flightStore.altimeterInHg,
+    elevFt: flightStore.fieldElevationFt,
     flightCategory: 'VFR',
+  };
+
+  const applyStationToDesk = (stnId: string) => {
+    setSelectedStation(stnId);
+    const data = stationData[stnId];
+    const meta = XC_STATIONS.find((s) => s.id === stnId);
+    flightStore.setDepartureAirport(stnId);
+    if (meta) {
+      flightStore.setFieldElevation(meta.elevFt);
+    }
+    if (data) {
+      flightStore.setWind(data.windDir || 360, data.windSpeed, data.windGust);
+      flightStore.setTemperature(data.temp);
+      flightStore.setAltimeter(data.altim);
+    }
+    setSyncedBadge(true);
+    setTimeout(() => setSyncedBadge(false), 1800);
   };
 
   const getCatBadge = (cat: string) => {
     switch (cat) {
       case 'LIFR':
-        return 'bg-purple-950/80 text-purple-300 border-purple-800';
+        return 'bg-purple-950/80 text-purple-300 border-purple-700/60';
       case 'IFR':
-        return 'bg-red-950/80 text-red-300 border-red-800';
+        return 'bg-rose-950/80 text-rose-300 border-rose-700/60';
       case 'MVFR':
-        return 'bg-blue-950/80 text-blue-300 border-blue-800';
+        return 'bg-sky-950/80 text-sky-300 border-sky-700/60';
       default:
-        return 'bg-emerald-950/80 text-emerald-300 border-emerald-800';
+        return 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60';
     }
   };
 
   return (
-    <div className="w-full bg-zinc-950/90 border-b border-zinc-800/80 px-3 sm:px-4 py-2 font-mono text-xs select-none">
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2">
+    <div className="w-full bg-slate-900/80 border-b border-slate-800/80 px-2.5 sm:px-5 py-1.5 sm:py-2 text-xs select-none shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 sm:gap-x-3 gap-y-1">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <span className="flex h-2 w-2 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          <span className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase">NOAA TELEMETRY</span>
-          <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border ${getCatBadge(activeData.flightCategory)}`}>
+          <span className="text-[10px] sm:text-[11px] font-semibold tracking-wider text-slate-300 uppercase">METAR</span>
+          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border font-mono ${getCatBadge(activeData.flightCategory)}`}>
             {activeData.flightCategory}
           </span>
+          {syncedBadge && (
+            <span className="text-[10px] font-semibold text-sky-400 bg-sky-950/80 border border-sky-800/60 px-1.5 py-0.5 rounded">
+              Synced
+            </span>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-zinc-400 text-[10px] sm:text-[11px]">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-slate-400 text-[10px] sm:text-[11px] font-mono">
           <span>
-            STN: <strong className="text-zinc-100">{activeData.station}</strong>
+            <strong className="text-slate-100">{activeData.station}</strong>
           </span>
-          <span className="text-zinc-700">|</span>
+          <span className="text-slate-700">|</span>
           <span>
-            TIME: <strong className="text-zinc-100">{activeData.timeZulu}</strong>
+            <strong className="text-slate-100">
+              {flightStore.windDirection.toString().padStart(3, '0')}°/{flightStore.windSpeed}
+              {flightStore.windGust ? `G${flightStore.windGust}` : ''}KT
+            </strong>
           </span>
-          <span className="text-zinc-700">|</span>
+          <span className="text-slate-700">|</span>
           <span>
-            WIND: <strong className="text-zinc-200">{activeData.windDir.toString().padStart(3, '0')}@{activeData.windSpeed}KT</strong>
+            <strong className="text-slate-100">{flightStore.temperatureC}°C</strong>
           </span>
-          <span className="text-zinc-700">|</span>
+          <span className="text-slate-700">|</span>
           <span>
-            TEMP: <strong className="text-zinc-200">{activeData.temp}°C</strong>
+            <strong className="text-slate-100">{flightStore.altimeterInHg.toFixed(2)}"</strong>
           </span>
-          <span className="text-zinc-700">|</span>
+          <span className="text-slate-700">|</span>
           <span>
-            ALTIM: <strong className="text-zinc-200">{activeData.altim.toFixed(2)}"</strong>
+            PA <strong className="text-sky-400">{flightStore.getPressureAltitude() ?? '--'}'</strong>
+          </span>
+          <span className="text-slate-700">|</span>
+          <span>
+            DA <strong className="text-sky-400">{flightStore.getDensityAltitude().exactFt ?? '--'}'</strong>
           </span>
         </div>
 
         {onSelectWeatherTab && (
           <button
             onClick={onSelectWeatherTab}
-            className="text-[10px] uppercase font-bold tracking-wider text-red-500 hover:text-red-400 hover:underline flex items-center gap-1"
+            className="hidden sm:flex text-[11px] font-semibold tracking-wide text-sky-400 hover:text-sky-300 items-center gap-1 shrink-0"
           >
-            Full Weather →
+            Weather & DA →
           </button>
         )}
       </div>
 
       {!loading && (
-        <div className="mt-1.5 pt-1.5 border-t border-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-1.5 text-[9px] text-zinc-500">
-          <div className="truncate text-zinc-400 font-mono">
-            <span className="font-bold text-zinc-300">RAW:</span> {activeData.raw}
+        <div className="mt-1 pt-1 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-1.5 text-[10px] sm:text-[11px] text-slate-400">
+          <div className="hidden sm:block truncate font-mono text-slate-400 max-w-[55%] lg:max-w-[65%]">
+            <span className="font-semibold text-slate-300">RAW:</span> {activeData.raw}
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="text-[8px] uppercase tracking-wider text-zinc-600">Route Fixes:</span>
-            {XC_STATIONS.map((stn, idx) => {
-              const isActive = selectedStation === stn.id;
-              return (
-                <span key={stn.id} className="inline-flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1 w-full sm:w-auto justify-between sm:justify-end">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mr-1">
+              Quick WX:
+            </span>
+            <div className="flex items-center gap-1">
+              {XC_STATIONS.map((stn) => {
+                const isActive = flightStore.departureAirport === stn.id;
+                return (
                   <button
+                    key={stn.id}
                     type="button"
-                    onClick={() => setSelectedStation(stn.id)}
-                    title={stn.name}
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-all ${
+                    onClick={() => applyStationToDesk(stn.id)}
+                    title={`${stn.name} (${stn.elevFt} ft MSL)`}
+                    className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] font-mono font-semibold transition-all ${
                       isActive
-                        ? 'bg-red-700 text-white'
-                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                        ? 'bg-sky-600 text-white shadow-sm'
+                        : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white'
                     }`}
                   >
                     {stn.id}
                   </button>
-                  {idx < XC_STATIONS.length - 1 && <span className="text-zinc-700">-</span>}
-                </span>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

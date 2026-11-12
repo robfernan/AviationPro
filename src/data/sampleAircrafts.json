@@ -30,7 +30,21 @@
     "aftCG": 47.0,
     "fuelArm": 48,
     "fuelCapacityGal": 48,
-    "fuelBurnGPH": 9.0,
+    "fuelBurnGPH": 10.0,
     "notes": "Sample PA-28 values."
+  },
+  {
+    "id": "da40",
+    "name": "Diamond DA40 NG (sample)",
+    "emptyWeight": 1984.0,
+    "emptyArm": 98.4,
+    "maxWeight": 2888,
+    "forwardCG": 94.5,
+    "aftCG": 102.0,
+    "fuelArm": 103.5,
+    "fuelCapacityGal": 39,
+    "usableFuelGal": 39,
+    "fuelBurnGPH": 6.2,
+    "notes": "Diamond DA40 NG Jet-A / Diesel training preset."
   }
 ]

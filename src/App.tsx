@@ -1,108 +1,177 @@
 import React, { useState } from 'react';
+import { Plane } from 'lucide-react';
 import { useAviation } from './hooks/useAviation';
+import { useFlightStore } from './core/flightStore';
 
 // --- Import Unified Modules ---
 import PlannerHub from './components/PlannerHub';
 import CX6Calculator from './components/CX6Calculator';
 import WeatherCalculator from './components/WeatherCalculator';
 import FlightLogs from './components/FlightLogs';
-import ToolsHub from './components/ToolsHub';
+import Hangar from './components/Hangar';
 import AviationTelemetryRibbon from './components/AviationTelemetryRibbon';
 
-const runtime = (typeof window !== 'undefined' ? (window as any).runtime : null);
+const runtime = typeof window !== 'undefined' ? (window as any).runtime : null;
 const isDesktop = !!runtime;
 
 const App: React.FC = () => {
   const { flights } = useAviation();
-  const [activeTab, setActiveTab] = useState<'NAVLOG' | 'CX6' | 'WEATHER' | 'LOGS' | 'TOOLS'>('NAVLOG');
+  const { selectedAircraftId, aircraftList, setAircraft, departureAirport, destinationAirport } = useFlightStore();
+  const [activeTab, setActiveTab] = useState<'NAVLOG' | 'CX6' | 'WEATHER' | 'LOGS' | 'HANGAR'>('NAVLOG');
 
   const handleQuit = () => isDesktop && runtime?.Quit();
   const handleMinimise = () => isDesktop && runtime?.WindowMinimise();
 
   return (
-    <div className="min-h-screen sm:h-screen w-full flex flex-col bg-black text-zinc-100 font-mono overflow-x-hidden sm:overflow-hidden border border-zinc-800 shadow-2xl">
-      
-      {/* 🛠️ ULTRA-WIDE RESPONSIVE NAVBAR / DRAG BAR */}
-      <nav 
-        style={{ ["--wails-draggable" as any]: "drag" }}
-        className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-3 sm:px-6 py-2.5 select-none shrink-0"
+    <div className="min-h-screen sm:h-screen w-full max-w-[100vw] flex flex-col bg-[#090d16] text-slate-100 overflow-x-hidden sm:overflow-hidden border border-slate-800/80 shadow-2xl">
+      {/* RESPONSIVE PRE-FLIGHT DESK NAVBAR */}
+      <nav
+        style={{ ['--wails-draggable' as any]: 'drag' }}
+        className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 border-b border-slate-800/80 bg-slate-950/95 px-2.5 sm:px-5 py-1.5 sm:py-2 select-none shrink-0"
       >
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-2.5 h-2.5 bg-red-600 rounded-sm animate-pulse" />
-          <span className="text-red-500 font-black tracking-tight text-xl italic">AVIATIONPRO</span>
-          <span className="hidden md:inline text-[10px] uppercase tracking-widest text-zinc-400 font-bold border-l border-zinc-800 pl-3">
-            Preflight Planning • EFB Companion • CX-6 Flight Computer
-          </span>
-        </div>
-        
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar bg-zinc-900/90 border border-zinc-800 rounded px-1.5 py-1" style={{ ["--wails-draggable" as any]: "no-drag" }}>
-          {(['NAVLOG', 'CX6', 'WEATHER', 'LOGS', 'TOOLS'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`min-w-[66px] sm:min-w-[84px] px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold tracking-wider transition-all rounded shrink-0 ${
-                activeTab === tab 
-                  ? 'bg-red-700 text-white shadow-[0_0_12px_rgba(220,38,38,0.5)]' 
-                  : 'text-zinc-300 hover:text-white hover:bg-zinc-800'
-              }`}
+        <div className="flex items-center justify-between w-full sm:w-auto gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-sky-500/15 border border-sky-500/40 flex items-center justify-center text-sky-400 shrink-0">
+              <Plane size={14} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-slate-100 font-bold tracking-tight text-sm sm:text-base leading-none truncate">
+                AviationPro
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium tracking-wide mt-0.5 hidden sm:inline truncate">
+                Pre-Flight Companion Desk
+              </span>
+            </div>
+          </div>
+          <div
+            className="flex items-center gap-1.5 pl-2 border-l border-slate-800 min-w-0"
+            style={{ ['--wails-draggable' as any]: 'no-drag' }}
+          >
+            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold hidden md:inline">
+              Airframe:
+            </span>
+            <select
+              value={selectedAircraftId}
+              onChange={(e) => setAircraft(e.target.value)}
+              className="text-[11px] sm:text-xs font-medium bg-slate-900 border border-slate-700/80 rounded-md px-2 py-1 text-slate-100 focus:border-sky-500 max-w-[155px] sm:max-w-[190px] truncate"
             >
-              <span className="sm:hidden">{tab === 'NAVLOG' ? 'PLAN' : tab === 'CX6' ? 'CX6' : tab === 'WEATHER' ? 'WX' : tab === 'LOGS' ? 'LOG' : 'TOOL'}</span>
-              <span className="hidden sm:inline">{tab === 'NAVLOG' ? 'NAVLOG' : tab}</span>
-            </button>
-          ))}
+              {aircraftList.map((ac) => (
+                <option key={ac.id} value={ac.id}>
+                  {ac.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div
+          className="grid grid-cols-5 sm:flex sm:flex-wrap items-center gap-1 bg-slate-900/90 border border-slate-800 rounded-lg p-1 w-full sm:w-auto"
+          style={{ ['--wails-draggable' as any]: 'no-drag' }}
+        >
+          {(['NAVLOG', 'CX6', 'WEATHER', 'LOGS', 'HANGAR'] as const).map((tab) => {
+            const labelMap = {
+              NAVLOG: 'Plan & Brief',
+              CX6: 'CX-6',
+              WEATHER: 'Weather & DA',
+              LOGS: 'Logbook',
+              HANGAR: 'Hangar',
+            };
+            const shortMap = {
+              NAVLOG: 'Plan',
+              CX6: 'CX-6',
+              WEATHER: 'WX',
+              LOGS: 'Logs',
+              HANGAR: 'Hangar',
+            };
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-1.5 sm:px-2.5 md:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold tracking-wide transition-all rounded-md text-center whitespace-nowrap ${
+                  activeTab === tab
+                    ? 'bg-sky-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70'
+                }`}
+              >
+                <span className="md:hidden">{shortMap[tab]}</span>
+                <span className="hidden md:inline">{labelMap[tab]}</span>
+              </button>
+            );
+          })}
 
           {isDesktop && (
-            <div className="hidden md:flex items-center border-l border-zinc-800 ml-2 pl-2">
-              <button onClick={handleMinimise} className="px-2 text-zinc-400 hover:text-white text-base leading-none">⎯</button>
-              <button onClick={handleQuit} className="px-2 text-zinc-400 hover:bg-red-700 hover:text-white text-sm leading-none">✕</button>
+            <div className="hidden md:flex items-center border-l border-slate-800 ml-1 pl-1.5">
+              <button onClick={handleMinimise} className="px-1.5 text-slate-400 hover:text-white text-base leading-none">
+                ⎯
+              </button>
+              <button
+                onClick={handleQuit}
+                className="px-1.5 text-slate-400 hover:bg-rose-600 hover:text-white rounded text-sm leading-none"
+              >
+                ✕
+              </button>
             </div>
           )}
         </div>
       </nav>
 
-      {/* 📡 EDITORIAL LIVE NOAA TELEMETRY RIBBON */}
+      {/* LIVE NOAA METAR & ROUTE RIBBON */}
       <AviationTelemetryRibbon onSelectWeatherTab={() => setActiveTab('WEATHER')} />
 
-      {/* 📱 FULL-WIDTH VIEWPORT (High-Legibility Avionics Surface) */}
-      <main className="flex-1 overflow-y-auto p-2 sm:p-5 lg:p-6 w-full custom-scrollbar min-h-0" style={{ WebkitOverflowScrolling: 'touch' } as any}>
+      {/* MAIN VIEWPORT */}
+      <main
+        className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6 w-full custom-scrollbar min-h-0"
+        style={{ WebkitOverflowScrolling: 'touch' } as any}
+      >
         {activeTab === 'NAVLOG' && (
-          <div className="h-full w-full animate-in fade-in duration-200 min-h-0">
+          <div className="w-full animate-in fade-in duration-200 min-h-0">
             <PlannerHub darkMode={true} />
           </div>
         )}
 
         {activeTab === 'CX6' && (
-          <div className="h-full w-full animate-in fade-in duration-200 min-h-0">
+          <div className="w-full animate-in fade-in duration-200 min-h-0">
             <CX6Calculator darkMode={true} />
           </div>
         )}
 
         {activeTab === 'WEATHER' && (
-          <div className="h-full w-full animate-in fade-in duration-200 min-h-0">
+          <div className="w-full animate-in fade-in duration-200 min-h-0">
             <WeatherCalculator darkMode={true} />
           </div>
         )}
 
         {activeTab === 'LOGS' && (
-          <div className="h-full w-full animate-in fade-in duration-200 min-h-0">
+          <div className="w-full animate-in fade-in duration-200 min-h-0">
             <FlightLogs darkMode={true} />
           </div>
         )}
 
-        {activeTab === 'TOOLS' && (
-          <div className="h-full w-full animate-in fade-in duration-200 min-h-0">
-            <ToolsHub darkMode={true} />
+        {activeTab === 'HANGAR' && (
+          <div className="w-full animate-in fade-in duration-200 min-h-0">
+            <Hangar darkMode={true} />
           </div>
         )}
       </main>
 
-      {/* 📟 STATUS BAR */}
-      <footer className="h-8 bg-zinc-950 border-t border-zinc-800 px-3 sm:px-6 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-400 uppercase tracking-widest shrink-0">
-        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> Nominal</span>
-          <span className="whitespace-nowrap">Logs: <strong className="text-zinc-200">{flights.length}</strong></span>
+      {/* STATUS BAR */}
+      <footer className="min-h-7 py-1 bg-slate-950 border-t border-slate-800/80 px-2.5 sm:px-5 flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] text-slate-400 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
+          <span className="flex items-center gap-1.5 font-medium text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Ready
+          </span>
+          <span className="text-slate-700">•</span>
+          <span className="font-mono text-[11px] sm:text-xs text-slate-300">
+            {departureAirport} → {destinationAirport}
+          </span>
+          <span className="text-slate-700">•</span>
+          <span className="whitespace-nowrap">
+            Logged Flights: <strong className="text-slate-200 font-mono">{flights.length}</strong>
+          </span>
         </div>
-        <div className="text-red-500 font-bold hidden sm:block whitespace-nowrap">100% OFFLINE // STANDARD .FPL READY</div>
+        <div className="text-sky-400 font-semibold hidden md:block whitespace-nowrap tracking-wide text-[11px]">
+          Offline-First • Standard .FPL Export Ready
+        </div>
       </footer>
     </div>
   );
