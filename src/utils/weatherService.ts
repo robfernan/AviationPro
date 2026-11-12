@@ -43,12 +43,15 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
 const getWeatherUrls = (path: string, icaoCode: string): string[] => {
   const code = icaoCode.toUpperCase().trim();
+  const target = `https://aviationweather.gov/api/data/${path}?ids=${code}&format=json`;
   if (isNative || isWails) {
-    return [`https://aviationweather.gov/api/data/${path}?ids=${code}&format=json`];
+    return [target];
   }
   return [
     `/aviationweather/api/data/${path}?ids=${code}&format=json`,
-    `https://aviationweather.gov/api/data/${path}?ids=${code}&format=json`,
+    target,
+    `https://corsproxy.io/?url=${encodeURIComponent(target)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
   ];
 };
 
