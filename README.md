@@ -11,6 +11,9 @@
 
 - **Live Web & Installable PWA:** [https://robfernan.github.io/AviationPro/](https://robfernan.github.io/AviationPro/)
 
+> [!NOTE]
+> **GitHub Pages Live Weather Limitation:** Because GitHub Pages is a static host, live NOAA `Fetch METAR/TAF` requests from `robfernan.github.io` may be blocked or rate-limited by browser CORS policies on `aviationweather.gov`. For uninterrupted live METAR/TAF fetching, run the local dev server (`bun run dev`), the native Wails desktop app, or the Capacitor mobile build—or paste raw METAR/TAF strings directly into the Weather & Briefing tabs.
+
 > [!IMPORTANT]
 > **Preflight Planning Notice:** AviationPro is a ground preflight dispatch and training companion. Pilots in Command must always verify performance, weight & balance, and weather data against the official aircraft Pilot's Operating Handbook (POH/AFM) and official aviation weather briefings prior to flight.
 
